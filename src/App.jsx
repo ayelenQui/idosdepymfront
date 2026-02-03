@@ -9,7 +9,7 @@ import LandingIndex from "./pages/LandingIndex";
 import AfiliadoHome from "./pages/afiliado/AfiliadoHome";
 import EmpresaHome from "./pages/empresa/EmpresaHome";
 import ProfesionalHome from "./pages/profesional/ProfesionalHome";
-
+import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 export default function App() {
   return (
     <BrowserRouter>
@@ -19,6 +19,7 @@ export default function App() {
 
         {/* ✅ Roles */}
         <Route path="/afiliado" element={<AfiliadoHome />} />
+       
         <Route path="/empresa" element={<EmpresaHome />} />
         <Route path="/profesional" element={<ProfesionalHome />} />
 

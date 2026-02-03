@@ -32,24 +32,32 @@ const brand = {
 };
 
 // ✅ Cambiá esto por tu imagen real (o import local)
-const heroImage =
-  "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1400&q=80";
+const heroImage = "/img/osdepymsucursal.jpg";
+
 
 function GoogleIcon() {
   return (
-    <span
-      aria-hidden
-      style={{
-        width: 16,
-        height: 16,
-        borderRadius: 999,
-        display: "inline-block",
-        background:
-          "conic-gradient(from 180deg, #ea4335, #fbbc05, #34a853, #4285f4, #ea4335)",
-      }}
-    />
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.7 1.22 9.2 3.6l6.9-6.9C35.9 2.4 30.4 0 24 0 14.6 0 6.4 5.8 2.5 14.1l8.1 6.3C12.5 13.3 17.8 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.5 24.5c0-1.6-.1-2.8-.4-4H24v8.1h12.7c-.6 3-2.4 5.5-5 7.2l7.7 6C43.9 37.8 46.5 31.8 46.5 24.5z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.6 28.4c-1-3-1-6.3 0-9.3l-8.1-6.3C-.6 18.9-.6 29.1 2.5 35.2l8.1-6.3z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.4 0 11.8-2.1 15.7-5.8l-7.7-6c-2.2 1.5-5 2.4-8 2.4-6.2 0-11.5-3.8-13.4-9.1l-8.1 6.3C6.4 42.2 14.6 48 24 48z"
+      />
+    </svg>
   );
 }
+
 
 export default function LandingIndex() {
   const navigate = useNavigate();
@@ -149,10 +157,13 @@ export default function LandingIndex() {
         <div className="relative z-10 p-10 flex flex-col justify-between w-full">
           <div className="flex items-center gap-3">
             <div
-              className="h-11 w-11 rounded-2xl grid place-items-center shadow-sm"
-              style={{ backgroundColor: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)" }}
+              
             >
-              <span className="text-white font-black text-lg">O</span>
+               <img
+        src="/img/osdepymlogo.jpg"
+        alt="OSDEPYM Logo"
+        className="h-50 w-50 object-contain"
+      />
             </div>
             <div>
               <div className="text-white/80 text-xs font-bold tracking-wider uppercase">
@@ -164,8 +175,8 @@ export default function LandingIndex() {
 
           <div className="max-w-md space-y-4">
             <h2 className="text-white text-4xl font-black leading-tight">
-              Coordinación y trazabilidad
-              <span className="text-white/80"> en un solo sistema</span>
+              Internación Domiciliaria
+              <span className="text-white/80"> Te estamos cuidando</span>
             </h2>
 
             <p className="text-white/80 text-base leading-relaxed">
@@ -205,7 +216,11 @@ export default function LandingIndex() {
                 className="h-10 w-10 rounded-2xl grid place-items-center shadow-sm"
                 style={{ backgroundColor: brand.teal }}
               >
-                <span className="text-white font-black">O</span>
+                 <img
+        src="img/osdepymlogo.jpg"
+        alt="OSDEPYM Logo"
+        className="h-10 w-10 object-contain"
+      />
               </div>
               <div>
                 <div className="text-xs font-bold tracking-wider uppercase" style={{ color: brand.steel }}>

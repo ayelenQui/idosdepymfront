@@ -190,50 +190,7 @@ export default function AfiliadoHome() {
         background: `linear-gradient(135deg, ${brand.ice} 0%, #ffffff 55%)`,
       }}
     >
-      {/* Topbar simple (podés integrarlo a tu layout) */}
-      <div className="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-black/5">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden">
-              <img
-                src="/img/osdepymlogo.jpg"
-                alt="OSDEPYM"
-                className="h-8 w-8 object-contain"
-              />
-            </div>
-            <div>
-              <div className="text-xs font-bold tracking-wider uppercase" style={{ color: brand.steel }}>
-                Portal del Afiliado
-              </div>
-              <div className="text-base font-black" style={{ color: "#0f1b1b" }}>
-                OSDEPYM ID
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Chip variant="flat" style={{ background: `${brand.teal}14`, color: brand.teal }}>
-              Atención 24hs
-            </Chip>
-            <Button
-              size="sm"
-              variant="flat"
-              style={{ background: "rgba(0,0,0,0.06)", color: "#0f1b1b" }}
-              onPress={() => alert("Mock: notificaciones")}
-            >
-              🔔
-            </Button>
-            <Button
-              size="sm"
-              variant="flat"
-              style={{ background: "rgba(0,0,0,0.06)", color: "#0f1b1b" }}
-              onPress={() => alert("Mock: perfil")}
-            >
-              👤
-            </Button>
-          </div>
-        </div>
-      </div>
+     
 
       <main className="max-w-6xl mx-auto px-6 py-6">
         {/* Header afiliado */}

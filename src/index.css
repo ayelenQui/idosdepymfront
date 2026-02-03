@@ -18,8 +18,7 @@
   --osd-rose: #b58b85;
   --osd-ice: #a9c6c6;
   --osd-sand: #c9b69c;
-
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -101,3 +100,7 @@ a { text-decoration: none; }
   color: var(--osd-primary);
   border: 1px solid rgba(169, 198, 198, 0.75);
 }
+.osd-title { font-weight: 600; }
+.osd-subtitle { font-weight: 500; opacity: .82; }
+.osd-number { font-weight: 700; letter-spacing: -0.02em; }
+

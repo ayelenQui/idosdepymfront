@@ -36,7 +36,11 @@ export default function AdminLayout() {
         <aside className="hidden md:flex w-64 shrink-0 flex-col bg-[#125b58] text-white shadow-xl">
           <div className="p-6 flex items-center gap-3">
             <div className="bg-white/20 p-2 rounded-lg">
-              <span className="material-symbols-outlined text-3xl">medical_services</span>
+                    <img
+        src="/img/osdepymlogo.jpg"
+        alt="OSDEPYM Logo"
+        className="h-10 w-10 object-contain"
+      />
             </div>
             <div>
               <h1 className="text-xl font-extrabold tracking-tight">OSDEPYM</h1>

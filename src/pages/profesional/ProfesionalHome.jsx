@@ -1,5 +1,6 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import {
   Button,
@@ -22,11 +23,11 @@ import {
 const MOCK_AFILIADOS = {
   "27945233473-01": {
     id: "27945233473-01",
-    nombre: "Juan Pérez",
-    edad: 72,
+    nombre: "Quiroga Ayelen",
+    edad: 34,
     domicilio: "Presidente Perón 456",
     localidad: "CABA",
-    empresa: "Best Care",
+    empresa: "Medincare",
     desde: "2026-01-10",
     diagnostico: "EPOC severo + dependencia de O2",
     plan: "Internación domiciliaria",
@@ -74,6 +75,9 @@ export default function ProfesionalHome() {
   const afKey = params.get("af") || "27945233473-01"; // fallback demo
   const afiliado = MOCK_AFILIADOS[afKey];
 
+  // Responsive: mobile detection
+  const isMobile = useIsMobile();
+
   // Modales
   const [openEmergencia, setOpenEmergencia] = React.useState(false);
   const [openVisita, setOpenVisita] = React.useState(false);
@@ -82,21 +86,20 @@ export default function ProfesionalHome() {
   const [openReq, setOpenReq] = React.useState(false);
   const [openNoVisita, setOpenNoVisita] = React.useState(false);
 
-  // Estado de feedback OK
+  // Estado OK
   const [visitaOK, setVisitaOK] = React.useState(false);
 
-  // Estado visita (firmas con dedo: dataURL PNG)
+  // Visita con firmas con dedo
   const [visita, setVisita] = React.useState({
     fechaHoraISO: "",
     ubicacionTexto: "",
     gmapsLink: "",
     notas: "",
-
-    firmaMedicoDataUrl: "", // obligatorio
-    firmaAfiliadoDataUrl: "", // obligatorio
+    firmaMedicoDataUrl: "",
+    firmaAfiliadoDataUrl: "",
   });
 
-  // Estado geolocalización
+  // GPS visita
   const [geo, setGeo] = React.useState({
     status: "idle", // idle | loading | ok | denied | error
     lat: null,
@@ -104,88 +107,6 @@ export default function ProfesionalHome() {
     accuracy: null,
     error: "",
   });
-
-
-const [geoNoVisita, setGeoNoVisita] = React.useState({
-  status: "idle", // idle | loading | ok | denied | error
-  lat: null,
-  lng: null,
-  accuracy: null,
-  error: "",
-});
-
-const geoWatchNoVisitaRef = React.useRef(null);
-
-const startGeoWatchNoVisita = React.useCallback(() => {
-  if (!("geolocation" in navigator)) {
-    setGeoNoVisita({
-      status: "error",
-      lat: null,
-      lng: null,
-      accuracy: null,
-      error: "Este dispositivo no soporta geolocalización.",
-    });
-    return;
-  }
-
-  if (geoWatchNoVisitaRef.current != null) {
-    navigator.geolocation.clearWatch(geoWatchNoVisitaRef.current);
-    geoWatchNoVisitaRef.current = null;
-  }
-
-  setGeoNoVisita((s) => ({ ...s, status: "loading", error: "" }));
-
-  geoWatchNoVisitaRef.current = navigator.geolocation.watchPosition(
-    (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      const gmaps = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-      setGeoNoVisita({
-        status: "ok",
-        lat: latitude,
-        lng: longitude,
-        accuracy,
-        error: "",
-      });
-
-      setNoVisita((s) => ({
-        ...s,
-        ubicacionTexto: `Lat ${latitude.toFixed(6)}, Lng ${longitude.toFixed(
-          6
-        )} (±${Math.round(accuracy)}m)`,
-        gmapsLink: gmaps,
-      }));
-    },
-    (err) => {
-      const msg =
-        err.code === 1
-          ? "Permiso de ubicación denegado. Activá ubicación para registrar el incidente."
-          : "No se pudo obtener la ubicación. Probá de nuevo.";
-
-      setGeoNoVisita({
-        status: err.code === 1 ? "denied" : "error",
-        lat: null,
-        lng: null,
-        accuracy: null,
-        error: msg,
-      });
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 12000,
-      maximumAge: 0,
-    }
-  );
-}, []);
-
-const stopGeoWatchNoVisita = React.useCallback(() => {
-  if (geoWatchNoVisitaRef.current != null) {
-    navigator.geolocation.clearWatch(geoWatchNoVisitaRef.current);
-    geoWatchNoVisitaRef.current = null;
-  }
-}, []);
-
-
   const geoWatchIdRef = React.useRef(null);
 
   const startGeoWatch = React.useCallback(() => {
@@ -200,7 +121,6 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
       return;
     }
 
-    // limpiar watch previo si existe
     if (geoWatchIdRef.current != null) {
       navigator.geolocation.clearWatch(geoWatchIdRef.current);
       geoWatchIdRef.current = null;
@@ -243,11 +163,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
           error: msg,
         });
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   }, []);
 
@@ -258,11 +174,11 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
     }
   }, []);
 
-  // Si se cierra el modal, frenar GPS
   React.useEffect(() => {
     if (!openVisita) stopGeoWatch();
   }, [openVisita, stopGeoWatch]);
 
+  // Insumos
   const [insumos, setInsumos] = React.useState({
     mes: "2026-02",
     guias: "",
@@ -272,6 +188,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
     observaciones: "",
   });
 
+  // Informe
   const [informe, setInforme] = React.useState({
     tipo: "Evolución",
     diagnostico: "",
@@ -279,21 +196,99 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
     indicaciones: "",
   });
 
+  // Requerimiento
   const [req, setReq] = React.useState({
     tipo: "Nuevo estudio",
     detalle: "",
     urgencia: "media",
   });
 
- const [noVisita, setNoVisita] = React.useState({
-  motivo: "No estaba el paciente",
-  detalle: "",
+  // No visita (incidente) + GPS + firma afiliado/familiar
+  const [noVisita, setNoVisita] = React.useState({
+    motivo: "No estaba el paciente",
+    detalle: "",
+    ubicacionTexto: "",
+    gmapsLink: "",
+    firmaAfiliadoDataUrl: "",
+  });
 
-  ubicacionTexto: "",
-  gmapsLink: "",
-  firmaAfiliadoDataUrl: "", // firma con el dedo (obligatoria)
-});
+  const [geoNoVisita, setGeoNoVisita] = React.useState({
+    status: "idle",
+    lat: null,
+    lng: null,
+    accuracy: null,
+    error: "",
+  });
+  const geoWatchNoVisitaRef = React.useRef(null);
 
+  const startGeoWatchNoVisita = React.useCallback(() => {
+    if (!("geolocation" in navigator)) {
+      setGeoNoVisita({
+        status: "error",
+        lat: null,
+        lng: null,
+        accuracy: null,
+        error: "Este dispositivo no soporta geolocalización.",
+      });
+      return;
+    }
+
+    if (geoWatchNoVisitaRef.current != null) {
+      navigator.geolocation.clearWatch(geoWatchNoVisitaRef.current);
+      geoWatchNoVisitaRef.current = null;
+    }
+
+    setGeoNoVisita((s) => ({ ...s, status: "loading", error: "" }));
+
+    geoWatchNoVisitaRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const gmaps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+        setGeoNoVisita({
+          status: "ok",
+          lat: latitude,
+          lng: longitude,
+          accuracy,
+          error: "",
+        });
+
+        setNoVisita((s) => ({
+          ...s,
+          ubicacionTexto: `Lat ${latitude.toFixed(6)}, Lng ${longitude.toFixed(
+            6
+          )} (±${Math.round(accuracy)}m)`,
+          gmapsLink: gmaps,
+        }));
+      },
+      (err) => {
+        const msg =
+          err.code === 1
+            ? "Permiso de ubicación denegado. Activá ubicación para registrar el incidente."
+            : "No se pudo obtener la ubicación. Probá de nuevo.";
+
+        setGeoNoVisita({
+          status: err.code === 1 ? "denied" : "error",
+          lat: null,
+          lng: null,
+          accuracy: null,
+          error: msg,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  }, []);
+
+  const stopGeoWatchNoVisita = React.useCallback(() => {
+    if (geoWatchNoVisitaRef.current != null) {
+      navigator.geolocation.clearWatch(geoWatchNoVisitaRef.current);
+      geoWatchNoVisitaRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!openNoVisita) stopGeoWatchNoVisita();
+  }, [openNoVisita, stopGeoWatchNoVisita]);
 
   if (!afiliado) {
     return (
@@ -310,25 +305,71 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
     );
   }
 
-  const submit = (msg) => alert(`Mock ✅ ${msg}`);
+  const submit = (msg) =>
+  toast.success(msg, {
+    description: "Se guardó correctamente.",
+    duration: 2200,
+  });
+
+
+  // Config común de modales (responsive + bottom sheet en móvil)
+  const modalPlacement = isMobile ? "bottom-center" : "center";
+  const modalSize = "full";
+  const modalContentClass =
+    "mx-auto w-full md:max-w-md " +
+    (isMobile
+      ? "rounded-t-[28px] rounded-b-none animate-sheetUp"
+      : "rounded-[28px]");
+  const modalBodyClass = "space-y-4 overflow-y-auto";
+  const modalBodyStyle = { maxHeight: isMobile ? "72svh" : "70vh" };
+  const modalFooterClass =
+    "sticky bottom-0 bg-white/90 backdrop-blur border-t flex gap-2";
 
   return (
-    <div className="h-[100svh] px-3 py-3">
+    <div className="min-h-[100svh] px-3 py-3">
+      {/* Micro-animaciones / sheet */}
+      <style>{`
+        @keyframes sheetUp {
+          from { transform: translateY(18px); opacity: 0.98; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-sheetUp { animation: sheetUp 220ms ease-out; }
+        .tap { transition: transform 160ms ease, filter 160ms ease; }
+        .tap:active { transform: scale(0.98); }
+        .lift { transition: transform 180ms ease, box-shadow 180ms ease; }
+        .lift:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(0,0,0,0.08); }
+      `}</style>
+
       <div className="h-full max-w-md mx-auto flex flex-col gap-3">
-        {/* Header */}
-        <div className="osd-surface px-4 py-3">
-          <div
-            className="text-xs text-[var(--osd-slate)]"
-            style={{ fontWeight: 500 }}
-          >
-            Sesión por QR • Afiliado validado
+        {/* Header con logo */}
+        <div className="osd-surface px-4 py-3 lift rounded-[22px]">
+          <div className="flex items-center gap-3 mb-2">
+            <img
+              src="/img/osdepymlogo.jpg"
+              alt="OSDEPYM"
+              style={{ height: 40, width: "auto", borderRadius: 10 }}
+            />
+            <div className="min-w-0">
+              <div
+                className="text-xs text-[var(--osd-slate)]"
+                style={{ fontWeight: 800 }}
+              >
+                Internación Domiciliaria • OSDEPYM
+              </div>
+              <div
+                className="text-[11px] text-[var(--osd-slate)]"
+                style={{ fontWeight: 500 }}
+              >
+                Sesión profesional por QR
+              </div>
+            </div>
           </div>
 
           <div className="mt-1 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div
                 className="text-base text-slate-900 truncate"
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 700 }}
               >
                 {afiliado.nombre}
               </div>
@@ -349,7 +390,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
 
         {/* Emergencia */}
         <div
-          className="rounded-[22px] p-4 border"
+          className="rounded-[22px] p-4 border lift"
           style={{
             background: "rgba(181,139,133,0.22)",
             borderColor: "rgba(181,139,133,0.45)",
@@ -358,20 +399,20 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         >
           <div
             className="text-xs"
-            style={{ fontWeight: 600, color: "var(--osd-secondary)" }}
+            style={{ fontWeight: 800, color: "var(--osd-secondary)" }}
           >
             Emergencia (prioridad)
           </div>
 
           <div
             className="mt-1 text-sm text-slate-900"
-            style={{ fontWeight: 600 }}
+            style={{ fontWeight: 700 }}
           >
             Sin oxígeno / saturación crítica / deterioro agudo
           </div>
 
           <Button
-            className="osd-btn-secondary w-full mt-3 py-6"
+            className="osd-btn-secondary w-full mt-3 py-6 tap"
             onPress={() => setOpenEmergencia(true)}
           >
             PEDIR AMBULANCIA / INTERNACIÓN
@@ -385,89 +426,38 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
           </div>
         </div>
 
-        {/* Acciones */}
-        <div className="osd-surface p-3">
-          <div
-            className="text-xs text-[var(--osd-slate)] px-1"
-            style={{ fontWeight: 600 }}
-          >
-            Acciones rápidas
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+  <ActionImageButton
+    title="Visita"
+    img="/img/actions/visita.png"
+    onPress={() => setOpenVisita(true)}
+  />
 
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <ActionBtn
-              title="Registrar visita"
-              onPress={() => {
-                setVisitaOK(false);
-                setGeo({
-                  status: "idle",
-                  lat: null,
-                  lng: null,
-                  accuracy: null,
-                  error: "",
-                });
+  <ActionImageButton
+    title="Insumos"
+    img="/img/actions/insumos.png"
+    onPress={() => setOpenInsumos(true)}
+  />
 
-                setVisita((s) => ({
-                  ...s,
-                  fechaHoraISO: new Date().toISOString(),
-                  ubicacionTexto: "",
-                  gmapsLink: "",
-                  notas: "",
-                  firmaMedicoDataUrl: "",
-                  firmaAfiliadoDataUrl: "",
-                }));
+  <ActionImageButton
+    title="Informe"
+    img="/img/actions/informe.png"
+    onPress={() => setOpenInforme(true)}
+  />
 
-                setOpenVisita(true);
+  <ActionImageButton
+    title="Agregar"
+    img="/img/actions/agregar.png"
+    onPress={() => setOpenReq(true)}
+  />
+</div>
 
-                // Pedir ubicación al abrir
-                startGeoWatch();
-              }}
-            />
-
-            <ActionBtn title="Registrar insumos" onPress={() => setOpenInsumos(true)} />
-            <ActionBtn title="Informe médico" onPress={() => setOpenInforme(true)} />
-            <ActionBtn title="Nuevo requerimiento" onPress={() => setOpenReq(true)} />
-            <ActionBtn
-  title="No pude registrar"
-  onPress={() => {
-    setGeoNoVisita({
-      status: "idle",
-      lat: null,
-      lng: null,
-      accuracy: null,
-      error: "",
-    });
-
-    setNoVisita((s) => ({
-      ...s,
-      motivo: "No estaba el paciente",
-      detalle: "",
-      ubicacionTexto: "",
-      gmapsLink: "",
-      firmaAfiliadoDataUrl: "",
-    }));
-
-    setOpenNoVisita(true);
-    startGeoWatchNoVisita();
-  }}
-/>
-
-            <ActionBtn
-              title="Ver datos"
-              variant="soft"
-              onPress={() => {
-                const el = document.getElementById("datos-afiliado");
-                el?.toggleAttribute("open");
-              }}
-            />
-          </div>
-        </div>
 
         {/* Datos afiliado */}
-        <details id="datos-afiliado" className="osd-surface p-4">
+        <details id="datos-afiliado" className="osd-surface p-4 lift rounded-[22px]">
           <summary
             className="cursor-pointer select-none text-sm text-slate-900"
-            style={{ fontWeight: 600 }}
+            style={{ fontWeight: 800 }}
           >
             Datos del afiliado
             <div
@@ -481,11 +471,11 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
           <div className="mt-3 space-y-3">
             <div
               className="text-xs text-[var(--osd-slate)]"
-              style={{ fontWeight: 600 }}
+              style={{ fontWeight: 800 }}
             >
               Diagnóstico
             </div>
-            <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
+            <div className="text-sm text-slate-900" style={{ fontWeight: 700 }}>
               {afiliado.diagnostico}
             </div>
 
@@ -493,21 +483,18 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
 
             <div
               className="text-xs text-[var(--osd-slate)]"
-              style={{ fontWeight: 600 }}
+              style={{ fontWeight: 800 }}
             >
               Contacto familiar
             </div>
-            <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
+            <div className="text-sm text-slate-900" style={{ fontWeight: 700 }}>
               {afiliado.contacto.nombre} ({afiliado.contacto.vinculo})
             </div>
-            <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
+            <div className="text-sm text-slate-900" style={{ fontWeight: 700 }}>
               Tel: {afiliado.contacto.tel}
             </div>
 
-            <Button
-              className="osd-btn-primary w-full"
-              onPress={() => submit("Llamada al familiar (mock)")}
-            >
+            <Button className="osd-btn-primary w-full tap" onPress={() => submit("Llamada al familiar (mock)")}>
               Llamar contacto
             </Button>
 
@@ -515,7 +502,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
 
             <div
               className="text-xs text-[var(--osd-slate)]"
-              style={{ fontWeight: 600 }}
+              style={{ fontWeight: 800 }}
             >
               Prestaciones autorizadas
             </div>
@@ -530,7 +517,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                     borderColor: "rgba(169,198,198,0.60)",
                   }}
                 >
-                  <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
+                  <div className="text-sm text-slate-900" style={{ fontWeight: 700 }}>
                     {p.tipo}
                   </div>
                   <div className="text-[11px] text-[var(--osd-slate)]" style={{ fontWeight: 500 }}>
@@ -546,17 +533,24 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         </details>
       </div>
 
-      {/* MODAL Emergencia */}
-      <Modal isOpen={openEmergencia} onOpenChange={setOpenEmergencia} placement="center" size="lg">
-        <ModalContent>
+      {/* ===================== MODALES ===================== */}
+
+      {/* MODAL: Emergencia */}
+      <Modal
+        isOpen={openEmergencia}
+        onOpenChange={setOpenEmergencia}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Solicitar ambulancia / internación
-                <span className="text-xs opacity-70">Alerta prioritaria para OSDEPYM</span>
-              </ModalHeader>
+              <BrandModalHeader
+                title="Solicitar ambulancia / internación"
+                subtitle="Alerta prioritaria para OSDEPYM"
+              />
 
-              <ModalBody className="space-y-4">
+              <ModalBody className={modalBodyClass} style={modalBodyStyle}>
                 <div className="rounded-2xl p-4 border osd-pill-critical">
                   Completá la causa y confirmá. Esto genera una alerta inmediata.
                 </div>
@@ -567,13 +561,25 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                   placeholder="Signos vitales, evolución, intervención realizada, etc."
                   minRows={5}
                 />
+
+                 
+                <Textarea
+                  label="Clinica de preferencia"
+                  placeholder="Ejm: Climedica."
+                  minRows={5}
+                />
               </ModalBody>
 
-              <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cancelar</Button>
+              <ModalFooter className={modalFooterClass}>
+                <Button variant="light" className="tap flex-1" onPress={onClose}>
+                  Cancelar
+                </Button>
                 <Button
-                  className="osd-btn-secondary"
-                  onPress={() => { submit("Emergencia enviada"); onClose(); }}
+                  className="osd-btn-secondary tap flex-1"
+                  onPress={() => {
+                    submit("Emergencia enviada");
+                    onClose();
+                  }}
                 >
                   Enviar alerta
                 </Button>
@@ -583,9 +589,14 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         </ModalContent>
       </Modal>
 
-      {/* MODAL Registrar visita */}
-      <Modal isOpen={openVisita} onOpenChange={setOpenVisita} placement="center" size="lg">
-        <ModalContent>
+      {/* MODAL: Registrar visita */}
+      <Modal
+        isOpen={openVisita}
+        onOpenChange={setOpenVisita}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
           {(onClose) => {
             const fecha = visita.fechaHoraISO ? new Date(visita.fechaHoraISO) : new Date();
 
@@ -594,11 +605,7 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
               month: "2-digit",
               year: "numeric",
             });
-
-            const horaStr = fecha.toLocaleTimeString("es-AR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const horaStr = fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
             const canSubmit =
               geo.status === "ok" &&
@@ -608,15 +615,12 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
 
             return (
               <>
-                <ModalHeader className="flex flex-col gap-1">
-                  Registrar visita
-                  <span className="text-xs opacity-70">
-                    Fecha y hora automáticas • Ubicación obligatoria • Firmas con el dedo obligatorias
-                  </span>
-                </ModalHeader>
+                <BrandModalHeader
+                  title="Registrar visita"
+                  subtitle="Fecha/hora automáticas • Ubicación obligatoria • Firmas con el dedo"
+                />
 
-                <ModalBody className="space-y-4">
-                  {/* OK */}
+                <ModalBody className={modalBodyClass} style={modalBodyStyle}>
                   {visitaOK && (
                     <div
                       className="rounded-2xl p-4 border flex items-center gap-3"
@@ -631,14 +635,14 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                           background: "rgba(18, 91, 88, 0.14)",
                           border: "1px solid rgba(18, 91, 88, 0.22)",
                           color: "var(--osd-primary)",
-                          fontWeight: 800,
+                          fontWeight: 900,
                         }}
                       >
                         ✓
                       </div>
                       <div>
-                        <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
-                          Usted registró la visita correctamente
+                        <div className="text-sm text-slate-900" style={{ fontWeight: 800 }}>
+                          Visita registrada correctamente
                         </div>
                         <div className="text-xs text-[var(--osd-slate)]" style={{ fontWeight: 500 }}>
                           Quedó asociada al afiliado del QR.
@@ -647,72 +651,22 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                     </div>
                   )}
 
-                  {/* Fecha / Hora */}
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Fecha" value={fechaStr} isReadOnly />
                     <Input label="Hora" value={horaStr} isReadOnly />
                   </div>
 
-                  {/* Ubicación */}
-                  <div
-                    className="rounded-2xl p-4 border"
-                    style={{
-                      background: "rgba(255,255,255,0.60)",
-                      borderColor: "rgba(169,198,198,0.60)",
-                    }}
-                  >
-                    <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
-                      Ubicación en tiempo real (obligatorio)
-                    </div>
-
-                    {geo.status === "loading" && (
-                      <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 500 }}>
-                        Obteniendo ubicación...
-                      </div>
-                    )}
-
-                    {geo.status === "ok" && (
-                      <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 500 }}>
-                        ✅ Ubicación capturada (±{Math.round(geo.accuracy)}m)
-                      </div>
-                    )}
-
-                    {(geo.status === "denied" || geo.status === "error") && (
-                      <div className="text-xs mt-1" style={{ fontWeight: 800, color: "var(--osd-secondary)" }}>
-                        {geo.error}
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex gap-2">
-                      <Button variant="light" onPress={startGeoWatch}>
-                        Reintentar
-                      </Button>
-
-                      <Button
-                        className="osd-btn-primary"
-                        isDisabled={!visita.gmapsLink}
-                        onPress={() => window.open(visita.gmapsLink, "_blank")}
-                      >
-                        Abrir Maps
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Input
-                    label="Ubicación (texto)"
-                    placeholder="Se completa con la ubicación del dispositivo"
-                    value={visita.ubicacionTexto}
-                    isReadOnly
+                  <GeoBox
+                    title="Ubicación en tiempo real (obligatorio)"
+                    geo={geo}
+                    onRetry={startGeoWatch}
+                    gmapsLink={visita.gmapsLink}
+                    setOpenMapsLink={() => window.open(visita.gmapsLink, "_blank")}
                   />
 
-                  <Input
-                    label="Link Google Maps"
-                    placeholder="Se completa automáticamente"
-                    value={visita.gmapsLink}
-                    isReadOnly
-                  />
+                  <Input label="Ubicación (texto)" value={visita.ubicacionTexto} isReadOnly />
+                  <Input label="Link Google Maps" value={visita.gmapsLink} isReadOnly />
 
-                  {/* Observación */}
                   <Textarea
                     label="Observación (obligatorio)"
                     placeholder='Ej: "Se controló saturación" / "Sin novedades"'
@@ -722,29 +676,33 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                     isRequired
                   />
 
-                  {/* Firmas con el dedo */}
                   <SignaturePad
                     label="Firma del médico (obligatorio)"
                     value={visita.firmaMedicoDataUrl}
-                    onChange={(dataUrl) => setVisita((s) => ({ ...s, firmaMedicoDataUrl: dataUrl }))}
+                    onChange={(dataUrl) =>
+                      setVisita((s) => ({ ...s, firmaMedicoDataUrl: dataUrl }))
+                    }
                   />
 
                   <SignaturePad
                     label="Firma afiliado / familiar (obligatorio)"
                     value={visita.firmaAfiliadoDataUrl}
-                    onChange={(dataUrl) => setVisita((s) => ({ ...s, firmaAfiliadoDataUrl: dataUrl }))}
+                    onChange={(dataUrl) =>
+                      setVisita((s) => ({ ...s, firmaAfiliadoDataUrl: dataUrl }))
+                    }
                   />
 
                   {!canSubmit && (
-                    <div className="text-xs" style={{ color: "var(--osd-secondary)", fontWeight: 800 }}>
+                    <div className="text-xs" style={{ color: "var(--osd-secondary)", fontWeight: 900 }}>
                       Para registrar: activá ubicación, completá observación y firmá (médico + afiliado).
                     </div>
                   )}
                 </ModalBody>
 
-                <ModalFooter>
+                <ModalFooter className={modalFooterClass}>
                   <Button
                     variant="light"
+                    className="tap flex-1"
                     onPress={() => {
                       setVisitaOK(false);
                       stopGeoWatch();
@@ -755,26 +713,15 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                   </Button>
 
                   <Button
-                    className="osd-btn-primary"
+                    className="osd-btn-primary tap flex-1"
                     isDisabled={!canSubmit}
                     onPress={() => {
                       setVisitaOK(true);
-
-                      // Listo para backend:
-                      // const payload = {
-                      //   fechaHoraISO: visita.fechaHoraISO,
-                      //   ubicacionTexto: visita.ubicacionTexto,
-                      //   gmapsLink: visita.gmapsLink,
-                      //   notas: visita.notas,
-                      //   firmaMedicoDataUrl: visita.firmaMedicoDataUrl,
-                      //   firmaAfiliadoDataUrl: visita.firmaAfiliadoDataUrl,
-                      // };
-
-                      // Si querés que cierre solo:
-                      // setTimeout(() => { setVisitaOK(false); stopGeoWatch(); onClose(); }, 1200);
+                      // payload listo para backend:
+                      // const payload = { ...visita };
                     }}
                   >
-                    Aceptar y registrar
+                    Registrar
                   </Button>
                 </ModalFooter>
               </>
@@ -783,17 +730,22 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         </ModalContent>
       </Modal>
 
-      {/* MODAL Insumos */}
-      <Modal isOpen={openInsumos} onOpenChange={setOpenInsumos} placement="center" size="lg">
-        <ModalContent>
+      {/* MODAL: Insumos */}
+      <Modal
+        isOpen={openInsumos}
+        onOpenChange={setOpenInsumos}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Registrar insumos mensuales
-                <span className="text-xs opacity-70">Carga mensual (luego pasa a Asarfarma)</span>
-              </ModalHeader>
+              <BrandModalHeader
+                title="Registrar insumos mensuales"
+                subtitle="Carga mensual (luego pasa a Asarfarma)"
+              />
 
-              <ModalBody className="space-y-4">
+              <ModalBody className={modalBodyClass} style={modalBodyStyle}>
                 <Input
                   label="Mes"
                   type="month"
@@ -823,28 +775,42 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                 )}
               </ModalBody>
 
-              <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cancelar</Button>
-                <Button className="osd-btn-primary" onPress={() => { submit("Insumos registrados"); onClose(); }}>
-                  Guardar
+              <ModalFooter className={modalFooterClass}>
+                <Button variant="light" className="tap flex-1" onPress={onClose}>
+                  Cancelar
                 </Button>
+               <Button
+  className="osd-btn-primary tap flex-1"
+  onPress={() => {
+    toast.success("Insumos registrados", {
+      description: "✅ Carga guardada correctamente",
+      duration: 2200,
+    });
+    onClose();
+  }}
+>
+  Guardar
+</Button>
+
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
 
-      {/* MODAL Informe */}
-      <Modal isOpen={openInforme} onOpenChange={setOpenInforme} placement="center" size="lg">
-        <ModalContent>
+      {/* MODAL: Informe */}
+      <Modal
+        isOpen={openInforme}
+        onOpenChange={setOpenInforme}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Registrar informe médico
-                <span className="text-xs opacity-70">Evolución y conductas</span>
-              </ModalHeader>
+              <BrandModalHeader title="Registrar informe médico" subtitle="Evolución y conductas" />
 
-              <ModalBody className="space-y-4">
+              <ModalBody className={modalBodyClass} style={modalBodyStyle}>
                 <Select
                   label="Tipo"
                   selectedKeys={[informe.tipo]}
@@ -880,9 +846,17 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                 />
               </ModalBody>
 
-              <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cancelar</Button>
-                <Button className="osd-btn-primary" onPress={() => { submit("Informe registrado"); onClose(); }}>
+              <ModalFooter className={modalFooterClass}>
+                <Button variant="light" className="tap flex-1" onPress={onClose}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="osd-btn-primary tap flex-1"
+                  onPress={() => {
+                    submit("Informe registrado");
+                    onClose();
+                  }}
+                >
                   Guardar
                 </Button>
               </ModalFooter>
@@ -891,17 +865,19 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         </ModalContent>
       </Modal>
 
-      {/* MODAL Requerimiento */}
-      <Modal isOpen={openReq} onOpenChange={setOpenReq} placement="center" size="lg">
-        <ModalContent>
+      {/* MODAL: Requerimiento */}
+      <Modal
+        isOpen={openReq}
+        onOpenChange={setOpenReq}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Nuevo requerimiento
-                <span className="text-xs opacity-70">Medicaciones, estudios, interconsulta</span>
-              </ModalHeader>
+              <BrandModalHeader title="Nuevo requerimiento" subtitle="Medicaciones, estudios, interconsulta" />
 
-              <ModalBody className="space-y-4">
+              <ModalBody className={modalBodyClass} style={modalBodyStyle}>
                 <Select
                   label="Tipo"
                   selectedKeys={[req.tipo]}
@@ -939,9 +915,17 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
                 />
               </ModalBody>
 
-              <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cancelar</Button>
-                <Button className="osd-btn-primary" onPress={() => { submit("Requerimiento enviado"); onClose(); }}>
+              <ModalFooter className={modalFooterClass}>
+                <Button variant="light" className="tap flex-1" onPress={onClose}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="osd-btn-primary tap flex-1"
+                  onPress={() => {
+                    submit("Requerimiento enviado");
+                    onClose();
+                  }}
+                >
                   Enviar
                 </Button>
               </ModalFooter>
@@ -950,176 +934,200 @@ const stopGeoWatchNoVisita = React.useCallback(() => {
         </ModalContent>
       </Modal>
 
-      {/* MODAL No pude registrar */}
-      <Modal isOpen={openNoVisita} onOpenChange={setOpenNoVisita} placement="center" size="lg">
-  <ModalContent>
-    {(onClose) => {
-      const canSubmit =
-        geoNoVisita.status === "ok" &&
-        (noVisita.detalle || "").trim().length >= 5 &&
-        !!noVisita.firmaAfiliadoDataUrl;
+      {/* MODAL: No pude registrar (incidente) */}
+      <Modal
+        isOpen={openNoVisita}
+        onOpenChange={setOpenNoVisita}
+        placement={modalPlacement}
+        size={modalSize}
+      >
+        <ModalContent className={modalContentClass}>
+          {(onClose) => {
+            const canSubmit =
+              geoNoVisita.status === "ok" &&
+              (noVisita.detalle || "").trim().length >= 5 &&
+              !!noVisita.firmaAfiliadoDataUrl;
 
-      return (
-        <>
-          <ModalHeader className="flex flex-col gap-1">
-            No pude registrar la visita
-            <span className="text-xs opacity-70">
-              Ubicación obligatoria • Detalle obligatorio • Firma obligatoria (afiliado/familiar)
-            </span>
-          </ModalHeader>
+            return (
+              <>
+                <BrandModalHeader
+                  title="No pude registrar la visita"
+                  subtitle="Ubicación obligatoria • Detalle obligatorio • Firma afiliado/familiar"
+                />
 
-          <ModalBody className="space-y-4">
-            {/* GPS obligatorio */}
-            <div
-              className="rounded-2xl p-4 border"
-              style={{
-                background: "rgba(255,255,255,0.60)",
-                borderColor: "rgba(169,198,198,0.60)",
-              }}
-            >
-              <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
-                Ubicación en tiempo real (obligatorio)
-              </div>
+                <ModalBody className={modalBodyClass} style={modalBodyStyle}>
+                  <GeoBox
+                    title="Ubicación en tiempo real (obligatorio)"
+                    geo={geoNoVisita}
+                    onRetry={startGeoWatchNoVisita}
+                    gmapsLink={noVisita.gmapsLink}
+                    setOpenMapsLink={() => window.open(noVisita.gmapsLink, "_blank")}
+                  />
 
-              {geoNoVisita.status === "loading" && (
-                <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 500 }}>
-                  Obteniendo ubicación...
-                </div>
-              )}
+                  <Input label="Ubicación (texto)" value={noVisita.ubicacionTexto} isReadOnly />
+                  <Input label="Link Google Maps" value={noVisita.gmapsLink} isReadOnly />
 
-              {geoNoVisita.status === "ok" && (
-                <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 500 }}>
-                  ✅ Ubicación capturada (±{Math.round(geoNoVisita.accuracy)}m)
-                </div>
-              )}
+                  <Select
+                    label="Motivo"
+                    selectedKeys={[noVisita.motivo]}
+                    onSelectionChange={(keys) => {
+                      const v = Array.from(keys)[0];
+                      setNoVisita((s) => ({ ...s, motivo: v }));
+                    }}
+                  >
+                    <SelectItem key="No estaba el paciente">No estaba el paciente</SelectItem>
+                    <SelectItem key="Domicilio incorrecto">Domicilio incorrecto</SelectItem>
+                    <SelectItem key="No responde familiar">No responde familiar</SelectItem>
+                    <SelectItem key="No me permiten ingresar">No me permiten ingresar</SelectItem>
+                    <SelectItem key="Otro">Otro</SelectItem>
+                  </Select>
 
-              {(geoNoVisita.status === "denied" || geoNoVisita.status === "error") && (
-                <div className="text-xs mt-1" style={{ fontWeight: 800, color: "var(--osd-secondary)" }}>
-                  {geoNoVisita.error}
-                </div>
-              )}
+                  <Textarea
+                    label="Detalle (obligatorio)"
+                    placeholder="Qué pasó, con quién hablaste, a qué hora, etc."
+                    minRows={6}
+                    value={noVisita.detalle}
+                    onValueChange={(v) => setNoVisita((s) => ({ ...s, detalle: v }))}
+                    isRequired
+                  />
 
-              <div className="mt-3 flex gap-2">
-                <Button variant="light" onPress={startGeoWatchNoVisita}>
-                  Reintentar
-                </Button>
+                  <SignaturePad
+                    label="Firma afiliado / familiar (obligatorio)"
+                    value={noVisita.firmaAfiliadoDataUrl}
+                    onChange={(dataUrl) =>
+                      setNoVisita((s) => ({ ...s, firmaAfiliadoDataUrl: dataUrl }))
+                    }
+                  />
 
-                <Button
-                  className="osd-btn-primary"
-                  isDisabled={!noVisita.gmapsLink}
-                  onPress={() => window.open(noVisita.gmapsLink, "_blank")}
-                >
-                  Abrir Maps
-                </Button>
-              </div>
-            </div>
+                  {!canSubmit && (
+                    <div className="text-xs" style={{ color: "var(--osd-secondary)", fontWeight: 900 }}>
+                      Para guardar: activá ubicación, completá el detalle y firmá (afiliado/familiar).
+                    </div>
+                  )}
+                </ModalBody>
 
-            <Input label="Ubicación (texto)" value={noVisita.ubicacionTexto} isReadOnly />
-            <Input label="Link Google Maps" value={noVisita.gmapsLink} isReadOnly />
+                <ModalFooter className={modalFooterClass}>
+                  <Button
+                    variant="light"
+                    className="tap flex-1"
+                    onPress={() => {
+                      stopGeoWatchNoVisita();
+                      onClose();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
 
-            {/* Motivo */}
-            <Select
-              label="Motivo"
-              selectedKeys={[noVisita.motivo]}
-              onSelectionChange={(keys) => {
-                const v = Array.from(keys)[0];
-                setNoVisita((s) => ({ ...s, motivo: v }));
-              }}
-            >
-              <SelectItem key="No estaba el paciente">No estaba el paciente</SelectItem>
-              <SelectItem key="Domicilio incorrecto">Domicilio incorrecto</SelectItem>
-              <SelectItem key="No responde familiar">No responde familiar</SelectItem>
-              <SelectItem key="No me permiten ingresar">No me permiten ingresar</SelectItem>
-              <SelectItem key="Otro">Otro</SelectItem>
-            </Select>
-
-            {/* Detalle obligatorio */}
-            <Textarea
-              label="Detalle (obligatorio)"
-              placeholder="Qué pasó, con quién hablaste, a qué hora, etc."
-              minRows={6}
-              value={noVisita.detalle}
-              onValueChange={(v) => setNoVisita((s) => ({ ...s, detalle: v }))}
-              isRequired
-            />
-
-            {/* Firma con el dedo obligatoria */}
-            <SignaturePad
-              label="Firma afiliado / familiar (obligatorio)"
-              value={noVisita.firmaAfiliadoDataUrl}
-              onChange={(dataUrl) => setNoVisita((s) => ({ ...s, firmaAfiliadoDataUrl: dataUrl }))}
-            />
-
-            {!canSubmit && (
-              <div className="text-xs" style={{ color: "var(--osd-secondary)", fontWeight: 800 }}>
-                Para guardar: activá ubicación, completá el detalle y firmá (afiliado/familiar).
-              </div>
-            )}
-          </ModalBody>
-
-          <ModalFooter>
-            <Button
-              variant="light"
-              onPress={() => {
-                stopGeoWatchNoVisita();
-                onClose();
-              }}
-            >
-              Cancelar
-            </Button>
-
-            <Button
-              className="osd-btn-primary"
-              isDisabled={!canSubmit}
-              onPress={() => {
-                // submit("Incidente registrado");
-
-                // payload listo para backend:
-                // const payload = {
-                //   motivo: noVisita.motivo,
-                //   detalle: noVisita.detalle,
-                //   ubicacionTexto: noVisita.ubicacionTexto,
-                //   gmapsLink: noVisita.gmapsLink,
-                //   firmaAfiliadoDataUrl: noVisita.firmaAfiliadoDataUrl,
-                // };
-
-                stopGeoWatchNoVisita();
-                onClose();
-              }}
-            >
-              Guardar
-            </Button>
-          </ModalFooter>
-        </>
-      );
-    }}
-  </ModalContent>
-</Modal>
-
+                  <Button
+                    className="osd-btn-primary tap flex-1"
+                    isDisabled={!canSubmit}
+                    onPress={() => {
+                      // payload listo para backend:
+                      // const payload = { ...noVisita };
+                      stopGeoWatchNoVisita();
+                      submit("Incidente registrado");
+                      onClose();
+                    }}
+                  >
+                    Guardar
+                  </Button>
+                </ModalFooter>
+              </>
+            );
+          }}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
 
-function ActionBtn({ title, onPress, variant = "normal" }) {
-  const isSoft = variant === "soft";
+/* ===================== COMPONENTES UI ===================== */
 
+function ActionImageButton({ title, img, onPress }) {
   return (
-    <button onClick={onPress} className="w-full text-left">
-      <div
-        className="rounded-2xl px-3 py-3 border"
+    <button
+      onClick={onPress}
+      className="w-full tap"
+      style={{
+        borderRadius: 28,
+        overflow: "hidden",
+      }}
+    >
+      <img
+        src={img}
+        alt={title}
+        className="w-full h-auto"
         style={{
-          background: isSoft ? "rgba(18,91,88,0.10)" : "rgba(255,255,255,0.60)",
-          borderColor: isSoft ? "rgba(18,91,88,0.20)" : "rgba(169,198,198,0.60)",
+          borderRadius: 28,
+          display: "block",
         }}
-      >
-        <div className="text-sm text-slate-900" style={{ fontWeight: 600 }}>
-          {title}
-        </div>
-        <div className="text-[11px] text-[var(--osd-slate)]" style={{ fontWeight: 500 }}>
-          Abrir →
-        </div>
-      </div>
+      />
     </button>
+  );
+}
+
+
+function BrandModalHeader({ title, subtitle }) {
+  return (
+    <ModalHeader className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <img
+          src="/img/osdepymlogo.jpg"
+          alt="OSDEPYM"
+          style={{ height: 26, width: "auto", borderRadius: 8 }}
+        />
+        <span style={{ fontWeight: 900 }}>{title}</span>
+      </div>
+      {subtitle && <span className="text-xs opacity-70">{subtitle}</span>}
+    </ModalHeader>
+  );
+}
+
+function GeoBox({ title, geo, onRetry, gmapsLink, setOpenMapsLink }) {
+  return (
+    <div
+      className="rounded-2xl p-4 border"
+      style={{
+        background: "rgba(255,255,255,0.60)",
+        borderColor: "rgba(169,198,198,0.60)",
+      }}
+    >
+      <div className="text-sm text-slate-900" style={{ fontWeight: 800 }}>
+        {title}
+      </div>
+
+      {geo.status === "loading" && (
+        <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 600 }}>
+          Obteniendo ubicación...
+        </div>
+      )}
+
+      {geo.status === "ok" && (
+        <div className="text-xs text-[var(--osd-slate)] mt-1" style={{ fontWeight: 600 }}>
+          ✅ Ubicación capturada (±{Math.round(geo.accuracy)}m)
+        </div>
+      )}
+
+      {(geo.status === "denied" || geo.status === "error") && (
+        <div className="text-xs mt-1" style={{ fontWeight: 900, color: "var(--osd-secondary)" }}>
+          {geo.error}
+        </div>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        <Button variant="light" className="tap flex-1" onPress={onRetry}>
+          Reintentar
+        </Button>
+
+        <Button
+          className="osd-btn-primary tap flex-1"
+          isDisabled={!gmapsLink}
+          onPress={setOpenMapsLink}
+        >
+          Abrir Maps
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -1222,25 +1230,22 @@ function SignaturePad({ label, value, onChange }) {
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="text-sm text-slate-900" style={{ fontWeight: 700 }}>
+        <div className="text-sm text-slate-900" style={{ fontWeight: 900 }}>
           {label}
         </div>
-        <Button variant="light" onPress={clear}>
+        <Button variant="light" className="tap" onPress={clear}>
           Limpiar
         </Button>
       </div>
 
-      <div
-        className="mt-2 rounded-xl overflow-hidden border"
-        style={{ borderColor: "rgba(15, 23, 42, 0.12)" }}
-      >
+      <div className="mt-2 rounded-xl overflow-hidden border" style={{ borderColor: "rgba(15, 23, 42, 0.12)" }}>
         <canvas
           ref={canvasRef}
           width={800}
           height={220}
           style={{
             width: "100%",
-            height: 140,
+            height: 110, // mobile friendly
             background: "rgba(255,255,255,0.75)",
             touchAction: "none",
             display: "block",
@@ -1256,7 +1261,7 @@ function SignaturePad({ label, value, onChange }) {
       </div>
 
       <div className="mt-2 text-[11px] text-[var(--osd-slate)]" style={{ fontWeight: 600 }}>
-        Firmá con el dedo (o mouse). Al soltar, se guarda automáticamente.
+        Firmá con el dedo. Al soltar, se guarda automáticamente.
       </div>
 
       {value && (
@@ -1266,4 +1271,21 @@ function SignaturePad({ label, value, onChange }) {
       )}
     </div>
   );
+}
+
+/* ===================== HOOKS ===================== */
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < breakpoint;
+  });
+
+  React.useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+
+  return isMobile;
 }

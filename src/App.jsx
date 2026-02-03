@@ -14,7 +14,8 @@ import AfiliadosPage from "./pages/admin/AfiliadosPage";
 import LandingIndex from "./pages/LandingIndex";
 import AfiliadoHome from "./pages/afiliado/AfiliadoHome";
 import EmpresaHome from "./pages/empresa/EmpresaHome";
-import ProfesionalHome from "./pages/profesional/ProfesionalHome";
+import ProfesionalHome from "./pages/profesional/ProfesionalHome.jsx";
+
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 
 

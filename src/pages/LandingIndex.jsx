@@ -13,12 +13,13 @@ import {
 } from "@heroui/react";
 
 const ROLES = {
+  ADMIN: "ADMIN",
   AFILIADO: "AFILIADO",
-  PROFESIONAL: "PROFESIONAL",
   EMPRESA: "EMPRESA",
+  PROFESIONAL: "PROFESIONAL",
 };
 
-// colores (los tuyos)
+// tus colores
 const brand = {
   teal: "#125b58",
   terracota: "#8a4b40",
@@ -30,9 +31,29 @@ const brand = {
   aqua: "#a9c6c6",
 };
 
+// ✅ Cambiá esto por tu imagen real (o import local)
+const heroImage =
+  "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1400&q=80";
+
+function GoogleIcon() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: 16,
+        height: 16,
+        borderRadius: 999,
+        display: "inline-block",
+        background:
+          "conic-gradient(from 180deg, #ea4335, #fbbc05, #34a853, #4285f4, #ea4335)",
+      }}
+    />
+  );
+}
+
 export default function LandingIndex() {
   const navigate = useNavigate();
-  const [role, setRole] = React.useState(ROLES.AFILIADO);
+  const [role, setRole] = React.useState(ROLES.ADMIN);
 
   const [form, setForm] = React.useState({
     user: "",
@@ -41,56 +62,144 @@ export default function LandingIndex() {
   });
 
   const roleMeta = React.useMemo(() => {
-    if (role === ROLES.AFILIADO) {
-      return {
-        title: "Ingreso Afiliados",
-        hint: "DNI / N° Afiliado",
-        extraLabel: "N° Afiliado (opcional)",
-        cta: "Entrar como Afiliado",
-        to: "/afiliado",
-        badge: "Portal Afiliados",
-      };
+    switch (role) {
+      case ROLES.ADMIN:
+        return {
+          title: "Acceso Admin OSDEPYM",
+          hint: "Usuario / Email",
+          extraLabel: "Área (opcional)",
+          cta: "Entrar como Admin",
+          to: "/admin",
+          badge: "Interno",
+          accent: brand.teal,
+        };
+      case ROLES.AFILIADO:
+        return {
+          title: "Acceso Afiliados",
+          hint: "DNI / N° Afiliado",
+          extraLabel: "N° Afiliado (opcional)",
+          cta: "Entrar como Afiliado",
+          to: "/afiliado",
+          badge: "Portal Afiliados",
+          accent: brand.teal,
+        };
+      case ROLES.EMPRESA:
+        return {
+          title: "Acceso Empresa ID",
+          hint: "CUIT / Usuario",
+          extraLabel: "Código Empresa (opcional)",
+          cta: "Entrar como Empresa",
+          to: "/empresa",
+          badge: "Panel Empresa",
+          accent: brand.caramel,
+        };
+      case ROLES.PROFESIONAL:
+      default:
+        return {
+          title: "Acceso Profesionales",
+          hint: "Matrícula / DNI",
+          extraLabel: "Especialidad (opcional)",
+          cta: "Entrar como Profesional",
+          to: "/profesional",
+          badge: "Panel Profesional",
+          accent: brand.terracota,
+        };
     }
-    if (role === ROLES.PROFESIONAL) {
-      return {
-        title: "Ingreso Profesionales",
-        hint: "Matrícula / DNI",
-        extraLabel: "Especialidad (opcional)",
-        cta: "Entrar como Profesional",
-        to: "/profesional",
-        badge: "Panel Profesional",
-      };
-    }
-    return {
-      title: "Ingreso Empresa ID",
-      hint: "CUIT / Usuario",
-      extraLabel: "Código Empresa (opcional)",
-      cta: "Entrar como Empresa",
-      to: "/empresa",
-      badge: "Panel Empresa",
-    };
   }, [role]);
 
   const submit = (e) => {
     e?.preventDefault();
-
-    // mock: solo valida que haya algo
+    // mock: validación mínima
     if (!form.user || !form.pass) return;
+    navigate(roleMeta.to);
+  };
 
+  const googleMock = () => {
+    alert(`Mock: Google Sign-In (${roleMeta.title})`);
     navigate(roleMeta.to);
   };
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen flex"
       style={{
         background: `linear-gradient(135deg, ${brand.ice} 0%, #ffffff 35%, ${brand.aqua} 100%)`,
       }}
     >
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-          <div className="space-y-2">
+      {/* ✅ Columna izquierda: imagen + marca */}
+      <div className="hidden lg:flex w-1/2 relative">
+        {/* Imagen */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        {/* Overlay moderno */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(120deg, rgba(18,91,88,0.85) 0%, rgba(18,91,88,0.65) 40%, rgba(255,255,255,0.05) 100%)",
+          }}
+        />
+        {/* Contenido */}
+        <div className="relative z-10 p-10 flex flex-col justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-11 w-11 rounded-2xl grid place-items-center shadow-sm"
+              style={{ backgroundColor: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)" }}
+            >
+              <span className="text-white font-black text-lg">O</span>
+            </div>
+            <div>
+              <div className="text-white/80 text-xs font-bold tracking-wider uppercase">
+                Internación Domiciliaria
+              </div>
+              <div className="text-white text-3xl font-black leading-tight">OSDEPYM</div>
+            </div>
+          </div>
+
+          <div className="max-w-md space-y-4">
+            <h2 className="text-white text-4xl font-black leading-tight">
+              Coordinación y trazabilidad
+              <span className="text-white/80"> en un solo sistema</span>
+            </h2>
+
+            <p className="text-white/80 text-base leading-relaxed">
+              Gestión integral para administración, empresas prestadoras, profesionales y afiliados:
+              visitas, alertas, informes, insumos y reclamos.
+            </p>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Chip variant="flat" className="text-white" style={{ background: "rgba(255,255,255,0.14)" }}>
+                Visitas
+              </Chip>
+              <Chip variant="flat" className="text-white" style={{ background: "rgba(255,255,255,0.14)" }}>
+                Alertas
+              </Chip>
+              <Chip variant="flat" className="text-white" style={{ background: "rgba(255,255,255,0.14)" }}>
+                Insumos
+              </Chip>
+              <Chip variant="flat" className="text-white" style={{ background: "rgba(255,255,255,0.14)" }}>
+                Informes
+              </Chip>
+            </div>
+          </div>
+
+          <div className="text-white/70 text-xs">
+            Demo UI • sin autenticación real • mock para presentación
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ Columna derecha: login */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {/* mini header mobile */}
+          <div className="lg:hidden mb-6">
             <div className="flex items-center gap-3">
               <div
                 className="h-10 w-10 rounded-2xl grid place-items-center shadow-sm"
@@ -98,88 +207,76 @@ export default function LandingIndex() {
               >
                 <span className="text-white font-black">O</span>
               </div>
-
               <div>
                 <div className="text-xs font-bold tracking-wider uppercase" style={{ color: brand.steel }}>
                   Internación Domiciliaria
                 </div>
-                <div className="text-2xl md:text-3xl font-black" style={{ color: "#0f1b1b" }}>
-                  OSDEPYM • Acceso al Sistema
+                <div className="text-2xl font-black" style={{ color: "#0f1b1b" }}>
+                  OSDEPYM
                 </div>
               </div>
             </div>
-
-            <p className="text-sm md:text-base" style={{ color: "#223535" }}>
-              Ingresá según tu perfil para ver afiliados, visitas, alertas, reclamos e informes.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <Chip variant="flat" style={{ background: `${brand.teal}14`, color: brand.teal }}>
-                Seguro
-              </Chip>
-              <Chip variant="flat" style={{ background: `${brand.terracota}14`, color: brand.terracota }}>
-                Gestión de prestaciones
-              </Chip>
-              <Chip variant="flat" style={{ background: `${brand.caramel}1A`, color: brand.terracota }}>
-                Reclamos / Alertas
-              </Chip>
-            </div>
           </div>
 
-          {/* Acceso rápido Admin (por si querés mostrar) */}
-          <div className="flex gap-2">
-            <Button
-              variant="flat"
-              className="font-bold"
-              style={{ background: `${brand.steel}18`, color: "#0f1b1b" }}
-              onPress={() => navigate("/admin")}
-            >
-              Demo Admin
-            </Button>
-          </div>
-        </div>
-
-        <Divider className="my-8" />
-
-        {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* Left: Card login */}
-          <Card className="border-none shadow-xl">
-            <CardHeader className="flex flex-col items-start gap-2">
-              <div className="flex items-center justify-between w-full">
+          <Card className="border-none shadow-2xl">
+            <CardHeader className="flex flex-col items-start gap-3">
+              <div className="w-full flex items-start justify-between gap-3">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-wider" style={{ color: brand.steel }}>
-                    Seleccioná perfil
+                    Inicio de sesión
                   </div>
                   <div className="text-xl font-black" style={{ color: "#0f1b1b" }}>
                     {roleMeta.title}
                   </div>
                 </div>
+
                 <Chip
                   variant="flat"
                   className="font-bold"
-                  style={{ background: `${brand.teal}14`, color: brand.teal }}
+                  style={{ background: `${roleMeta.accent}14`, color: roleMeta.accent }}
                 >
                   {roleMeta.badge}
                 </Chip>
               </div>
 
+              {/* Tabs 4 roles */}
               <Tabs
                 selectedKey={role}
                 onSelectionChange={(k) => setRole(k)}
                 variant="solid"
                 radius="lg"
-                classNames={{
-                  tabList: "w-full",
-                }}
+                classNames={{ tabList: "w-full" }}
               >
+                <Tab key={ROLES.ADMIN} title="Admin" />
                 <Tab key={ROLES.AFILIADO} title="Afiliado" />
-                <Tab key={ROLES.PROFESIONAL} title="Profesional" />
                 <Tab key={ROLES.EMPRESA} title="Empresa" />
+                <Tab key={ROLES.PROFESIONAL} title="Profesional" />
               </Tabs>
             </CardHeader>
 
             <CardBody className="space-y-4">
+              {/* Google primero (más moderno) */}
+              <Button
+                fullWidth
+                size="lg"
+                variant="bordered"
+                className="font-bold"
+                onPress={googleMock}
+              >
+                <span style={{ marginRight: 10, display: "inline-flex" }}>
+                  <GoogleIcon />
+                </span>
+                Iniciar con Google
+              </Button>
+
+              <div className="flex items-center gap-3">
+                <Divider className="flex-1" />
+                <span className="text-xs" style={{ color: brand.steel }}>
+                  o con usuario
+                </span>
+                <Divider className="flex-1" />
+              </div>
+
               <form onSubmit={submit} className="space-y-4">
                 <Input
                   label={roleMeta.hint}
@@ -208,7 +305,7 @@ export default function LandingIndex() {
                 <Button
                   type="submit"
                   className="w-full font-black"
-                  style={{ backgroundColor: brand.teal, color: "white" }}
+                  style={{ backgroundColor: roleMeta.accent, color: "white" }}
                 >
                   {roleMeta.cta}
                 </Button>
@@ -227,53 +324,21 @@ export default function LandingIndex() {
             </CardBody>
           </Card>
 
-          {/* Right: Info / tips */}
-          <Card className="border-none shadow-xl">
-            <CardHeader>
-              <div className="space-y-1">
-                <div className="text-xs font-bold uppercase tracking-wider" style={{ color: brand.steel }}>
-                  Qué vas a ver
-                </div>
-                <div className="text-xl font-black" style={{ color: "#0f1b1b" }}>
-                  Funcionalidades por rol
-                </div>
-              </div>
-            </CardHeader>
-            <CardBody className="space-y-4">
-              <div className="rounded-2xl p-4" style={{ background: `${brand.teal}12` }}>
-                <div className="font-black" style={{ color: brand.teal }}>
-                  Afiliado
-                </div>
-                <div className="text-sm" style={{ color: "#223535" }}>
-                  Ver plan de prestaciones, visitas programadas, evolución, reclamos y documentos.
-                </div>
-              </div>
-
-              <div className="rounded-2xl p-4" style={{ background: `${brand.terracota}12` }}>
-                <div className="font-black" style={{ color: brand.terracota }}>
-                  Profesional
-                </div>
-                <div className="text-sm" style={{ color: "#223535" }}>
-                  Agenda de visitas, cargar informes, alertas clínicas y seguimiento por afiliado.
-                </div>
-              </div>
-
-              <div className="rounded-2xl p-4" style={{ background: `${brand.caramel}18` }}>
-                <div className="font-black" style={{ color: "#6a3a31" }}>
-                  Empresa ID
-                </div>
-                <div className="text-sm" style={{ color: "#223535" }}>
-                  Gestionar afiliados asignados, equipo médico/enfermería, visitas y respuesta a reclamos.
-                </div>
-              </div>
-
-              <Divider />
-
-              <div className="text-xs" style={{ color: brand.steel }}>
-                Tip: después conectamos esto con tu backend (Spring + Rabbit) y guardamos el rol en sesión/JWT.
-              </div>
-            </CardBody>
-          </Card>
+          {/* acceso rápido admin (extra, por si querés más directo aún) */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <span className="text-xs" style={{ color: brand.steel }}>
+              Acceso rápido:
+            </span>
+            <Button
+              size="sm"
+              variant="flat"
+              className="font-bold"
+              style={{ background: `${brand.teal}14`, color: brand.teal }}
+              onPress={() => navigate("/admin")}
+            >
+              /admin
+            </Button>
+          </div>
         </div>
       </div>
     </div>

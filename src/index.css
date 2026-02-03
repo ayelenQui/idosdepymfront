@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@plugin "./hero.ts";
+
+/* Para que Tailwind “vea” los estilos/clases de HeroUI */
+@source "../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+/* =========================
+   OSDEPYM THEME (PALETA)
+   ========================= */
+:root {
+  --osd-primary: #125b58;
+  --osd-secondary: #8a4b40;
+  --osd-bg: #dfe7e4;
+  --osd-slate: #829ea1;
+  --osd-caramel: #b17f5f;
+  --osd-rose: #b58b85;
+  --osd-ice: #a9c6c6;
+  --osd-sand: #c9b69c;
+
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* NO fuerces "color-scheme: light dark" acá, porque te cambia inputs y botones */
+}
+
+/* ✅ IMPORTANTÍSIMO: sacamos el body del template Vite que te rompe el layout */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--osd-bg);
+  color: #0f172a; /* slate-900 */
+}
+
+/* Links normales */
+a { text-decoration: none; }
+
+/* =========================
+   Helpers (sin @apply raros)
+   ========================= */
+
+/* “Surface” tipo glass */
+.osd-surface {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(169, 198, 198, 0.6); /* ice con opacidad */
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(18, 91, 88, 0.14);
+}
+
+/* Botón marca */
+.osd-btn-primary {
+  background: var(--osd-primary);
+  color: white;
+  font-weight: 800;
+  border-radius: 9999px;
+}
+
+/* Botón terracota */
+.osd-btn-secondary {
+  background: var(--osd-secondary);
+  color: white;
+  font-weight: 800;
+  border-radius: 9999px;
+}
+
+/* Pills */
+.osd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.osd-pill-critical {
+  background: rgba(181, 139, 133, 0.28);
+  color: var(--osd-secondary);
+  border: 1px solid rgba(181, 139, 133, 0.45);
+}
+
+.osd-pill-open {
+  background: rgba(201, 182, 156, 0.28);
+  color: var(--osd-secondary);
+  border: 1px solid rgba(201, 182, 156, 0.55);
+}
+
+.osd-pill-ok {
+  background: rgba(169, 198, 198, 0.35);
+  color: var(--osd-primary);
+  border: 1px solid rgba(169, 198, 198, 0.75);
+}

@@ -567,13 +567,14 @@ export default function AfiliadoDashboard() {
                       isRequired
                     />
                     <Textarea
-                      label="Detalle"
-                      placeholder="Contanos tu idea o sugerencia."
-                      value={nuevo.detalle}
-                      onValueChange={(v) => setNuevo((s) => ({ ...s, detalle: v }))}
-                      minRows={6}
-                      isRequired
-                    />
+  label="Escribí tu mensaje"
+  placeholder="Tu opinión es importante. Te leemos con atención 💚"
+  value={nuevo.detalle}
+  onValueChange={(v) => setNuevo((s) => ({ ...s, detalle: v }))}
+  minRows={6}
+  isRequired
+/>
+
                   </>
                 )}
               </ModalBody>

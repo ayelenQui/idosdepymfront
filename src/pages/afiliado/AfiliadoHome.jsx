@@ -1,11 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import AccionesRapidasGrid from "./AccionesRapidasGrid";
-
 
 import {
   Card,
-  CardHeader,
   CardBody,
   Button,
   Chip,
@@ -30,27 +27,30 @@ const brand = {
   ice: "#dfe7e4",
 };
 
+/** Categorías más “humanas” */
 const CATEGORIAS = [
-  { key: "insumos", label: "Insumos" },
-  { key: "visitas", label: "Enfermería / Visitas" },
-  { key: "empresa", label: "Empresa ID" },
-  { key: "admin", label: "Administrativo" },
+  { key: "insumos", label: "Insumos y materiales" },
+  { key: "visitas", label: "Visitas / Enfermería" },
+  { key: "empresa", label: "Empresa que atiende" },
+  { key: "admin", label: "Administración" },
   { key: "sugerencia", label: "Sugerencia" },
   { key: "otro", label: "Otro" },
 ];
 
+/** Prioridades más amables */
 const PRIORIDADES = [
-  { key: "baja", label: "Baja" },
-  { key: "media", label: "Media" },
-  { key: "alta", label: "Alta" },
-  { key: "urgente", label: "Urgente" },
+  { key: "baja", label: "Puede esperar" },
+  { key: "media", label: "Normal" },
+  { key: "alta", label: "Necesito respuesta pronto" },
+  { key: "urgente", label: "Es importante" },
 ];
 
+/** Estados más humanos */
 const ESTADOS = {
-  NUEVO: "Nuevo",
-  REVISION: "En revisión",
-  COORDINACION: "Coordinación",
-  RESUELTO: "Resuelto",
+  NUEVO: "Recibido",
+  REVISION: "Lo estamos viendo",
+  COORDINACION: "Estamos coordinando",
+  RESUELTO: "Listo",
 };
 
 function statusColor(estado) {
@@ -72,74 +72,132 @@ function catLabel(key) {
   return CATEGORIAS.find((c) => c.key === key)?.label ?? key;
 }
 
-function Icon({ children }) {
+/** ✅ Toast simple y lindo */
+function useToast() {
+  const [toast, setToast] = React.useState(null);
+
+  const show = (msg, type = "success") => {
+    setToast({ msg, type });
+    window.clearTimeout(show._t);
+    show._t = window.setTimeout(() => setToast(null), 2600);
+  };
+
+  return { toast, show, clear: () => setToast(null) };
+}
+
+function Toast({ toast }) {
+  if (!toast) return null;
+  const isOk = toast.type === "success";
+
   return (
-    <span
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        display: "grid",
-        placeItems: "center",
-        background: "rgba(18,91,88,0.12)",
-        color: brand.teal,
-        fontSize: 20,
-        fontWeight: 800,
-      }}
+    <div
+      aria-live="polite"
+      aria-atomic="true"
+      className="fixed left-1/2 -translate-x-1/2 bottom-4 z-[9999] w-[92%] max-w-md"
     >
-      {children}
-    </span>
+      <div
+        className="rounded-2xl px-4 py-3 shadow-lg border flex items-center gap-3"
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          borderColor: isOk ? "rgba(18,91,88,0.25)" : "rgba(181,139,133,0.35)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <div
+          className="h-10 w-10 rounded-full grid place-items-center"
+          style={{
+            background: isOk ? "rgba(18,91,88,0.12)" : "rgba(181,139,133,0.18)",
+            border: `1px solid ${
+              isOk ? "rgba(18,91,88,0.22)" : "rgba(181,139,133,0.35)"
+            }`,
+            color: isOk ? "#125b58" : "#8a4b40",
+            fontWeight: 900,
+            fontSize: 18,
+          }}
+        >
+          {isOk ? "✓" : "!"}
+        </div>
+
+        <div className="min-w-0">
+          <div className="text-sm font-extrabold" style={{ color: "#0f1b1b" }}>
+            {isOk ? "Listo" : "Atención"}
+          </div>
+          <div className="text-sm" style={{ color: "#223535", lineHeight: 1.25 }}>
+            {toast.msg}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default function AfiliadoHome() {
   const navigate = useNavigate();
 
-  // mock: datos del afiliado (para demo)
+  /** MOCK afiliado */
   const afiliado = {
-    nombre: "Juan Pérez",
-    plan: "Cobertura Integral Plus",
-    nro: "12-45879-01",
+    nombre: "Ayelen Quiroga",
+    plan: "Cobertura Plan Personal",
+    nro: "23-35979243-00",
     estado: "Internación Domiciliaria Activa",
-    Domicilio: "Presidente Peron 456" ,
-    Localidad: "Capital Federal",
+    domicilio: "Presidente Perón 456",
+    localidad: "Capital Federal",
   };
 
-   const [tickets, setTickets] = React.useState([
+  /** Toast */
+  const { toast, show: showToast } = useToast();
+
+  /** Tickets mock */
+  const [tickets, setTickets] = React.useState([
     {
-      id: "REC-1024",
+      id: "SOL-1024",
       categoria: "visitas",
-      titulo: "No vino la enfermera (turno mañana)",
+      titulo: "No vino la enfermera (mañana)",
       detalle: "La visita estaba pactada para 09:00 y no se presentó nadie.",
       prioridad: "alta",
-      estado: "En revisión",
+      estado: ESTADOS.REVISION,
       fecha: "2026-02-03",
     },
     {
-      id: "REC-1019",
+      id: "SOL-1019",
       categoria: "insumos",
-      titulo: "Insumo defectuoso",
+      titulo: "Un insumo vino en mal estado",
       detalle: "Llegó un insumo con empaque abierto y sin rótulo legible.",
       prioridad: "media",
-      estado: "Coordinación",
+      estado: ESTADOS.COORDINACION,
       fecha: "2026-02-01",
     },
   ]);
-  // modales
+
+  /** Modales */
   const [openNuevo, setOpenNuevo] = React.useState(false);
   const [openCalif, setOpenCalif] = React.useState(false);
 
-  // tabs dentro del modal "Nuevo"
-  const [nuevoTab, setNuevoTab] = React.useState("reclamo");
+  /** Check-in quincenal */
+  const [openCheckin, setOpenCheckin] = React.useState(false);
+  const [checkinOk, setCheckinOk] = React.useState(false);
+  const [checkin, setCheckin] = React.useState({
+    visitas: "",
+    coordinacion: "",
+    claridad: "",
+    simple: "",
+    adaptacion: "",
+    sugerencia: "",
+  });
 
+  /** Tabs modal Nuevo */
+  const [nuevoTab, setNuevoTab] = React.useState("ayuda");
+
+  /** Form “nuevo” */
   const [nuevo, setNuevo] = React.useState({
-    categoria: "insumos",
+    categoria: "visitas",
     prioridad: "media",
     titulo: "",
     detalle: "",
     fechaIncidente: "",
   });
 
+  /** Form calificación */
   const [rate, setRate] = React.useState({
     target: "profesional",
     nombre: "",
@@ -147,10 +205,22 @@ export default function AfiliadoHome() {
     comentario: "",
   });
 
-  const submitNuevo = () => {
-    if (!nuevo.titulo || !nuevo.detalle) return;
+  const openNuevoAyuda = (categoriaKey) => {
+    setNuevoTab("ayuda");
+    setNuevo((s) => ({ ...s, categoria: categoriaKey ?? "visitas" }));
+    setOpenNuevo(true);
+  };
 
-    const id = `REC-${Math.floor(1000 + Math.random() * 9000)}`;
+  const submitNuevo = () => {
+    const tituloOk = (nuevo.titulo || "").trim().length >= 3;
+    const detalleOk = (nuevo.detalle || "").trim().length >= 8;
+
+    if (!tituloOk || !detalleOk) {
+      showToast("Por favor, completá el título y el detalle 💚", "warn");
+      return;
+    }
+
+    const id = `SOL-${Math.floor(1000 + Math.random() * 9000)}`;
     const today = new Date().toISOString().slice(0, 10);
 
     setTickets((prev) => [
@@ -166,21 +236,20 @@ export default function AfiliadoHome() {
       ...prev,
     ]);
 
-    setNuevo((s) => ({ ...s, titulo: "", detalle: "" }));
+    setNuevo((s) => ({ ...s, titulo: "", detalle: "", fechaIncidente: "" }));
     setOpenNuevo(false);
+    showToast("Listo 💚 Ya recibimos tu solicitud.", "success");
   };
 
   const submitCalif = () => {
-    if (!rate.nombre) return;
-    alert("Mock: calificación registrada ⭐");
+    if (!(rate.nombre || "").trim()) {
+      showToast("Decinos a quién querés valorar 💚", "warn");
+      return;
+    }
+
     setRate({ target: "profesional", nombre: "", estrellas: 5, comentario: "" });
     setOpenCalif(false);
-  };
-
-  const openNuevoReclamo = (categoriaKey) => {
-    setNuevoTab("reclamo");
-    setNuevo((s) => ({ ...s, categoria: categoriaKey ?? "insumos" }));
-    setOpenNuevo(true);
+    showToast("¡Gracias! Tu comentario nos ayuda a mejorar 💚", "success");
   };
 
   return (
@@ -190,106 +259,126 @@ export default function AfiliadoHome() {
         background: `linear-gradient(135deg, ${brand.ice} 0%, #ffffff 55%)`,
       }}
     >
-     
-
-      <main className="max-w-6xl mx-auto px-6 py-6">
-        {/* Header afiliado */}
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-5 md:py-6">
+        {/* HEADER AFILIADO */}
         <Card className="border-none shadow-md">
           <CardBody className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div
-                className="h-14 w-14 rounded-full"
-                style={{
-                  background: "linear-gradient(135deg, rgba(48,140,232,0.25), rgba(18,91,88,0.15))",
-                  display: "grid",
-                  placeItems: "center",
-                  fontWeight: 900,
-                  color: "#0f1b1b",
-                }}
-              >
-                JP
-              </div>
-              <div>
-                <div className="text-2xl font-black" style={{ color: "#0f1b1b" }}>
+              <img
+                src="/img/osdepymlogo.jpg"
+                alt="OSDEPYM"
+                style={{ height: 52, width: "auto", borderRadius: 14 }}
+              />
+
+              <div className="min-w-0">
+                <div className="text-3xl md:text-2xl font-black" style={{ color: "#0f1b1b" }}>
                   Hola, {afiliado.nombre}
                 </div>
-                <div className="text-sm" style={{ color: "#223535" }}>
-                  <span className="font-bold" style={{ color: brand.teal }}>
+
+                <div className="text-base md:text-sm" style={{ color: "#223535", lineHeight: 1.35 }}>
+                  <span className="font-extrabold" style={{ color: brand.teal }}>
                     {afiliado.estado}
                   </span>{" "}
                   • Plan: <span className="font-semibold">{afiliado.plan}</span> • Afiliado N°:{" "}
                   <span className="font-semibold">{afiliado.nro}</span>
                 </div>
+
+                <div className="text-sm md:text-xs mt-1" style={{ color: brand.steel }}>
+                  📍 {afiliado.domicilio} • {afiliado.localidad}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            {/* Acciones header */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
               <Button
-                className="font-black"
+                size="lg"
+                className="font-black w-full"
                 style={{ backgroundColor: brand.teal, color: "white" }}
-                onPress={() => openNuevoReclamo("visitas")}
+                onPress={() => openNuevoAyuda("visitas")}
               >
-                Crear reclamo
+                Ayuda
               </Button>
+
               <Button
+                size="lg"
                 variant="flat"
-                className="font-bold"
+                className="font-bold w-full flex items-center gap-2 justify-center"
                 style={{ background: `${brand.teal}14`, color: brand.teal }}
                 onPress={() => setOpenCalif(true)}
               >
-                Calificar atención
+                <img
+                  src="/img/actions/mensaje.png"
+                  alt="Sobre"
+                  style={{ height: 22, width: 22 }}
+                />
+                Valorar
               </Button>
+
               <Button
+                size="lg"
                 variant="flat"
-                className="font-bold"
-                style={{ background: "rgba(0,0,0,0.06)", color: "#0f1b1b" }}
-                onPress={() => alert("Mock: contactar 24hs")}
+                className="font-bold w-full"
+                style={{ background: `${brand.teal}10`, color: brand.teal }}
+                onPress={() => setOpenCheckin(true)}
               >
-                Contacto 24hs
+                💚OSDEPYM
               </Button>
             </div>
           </CardBody>
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Columna izquierda (2/3) */}
+          {/* IZQUIERDA */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Accesos rápidos */}
-            
-            {/* Acciones rápidas (HeroUI cards con imagen) */}
-<section>
-  <AccionesRapidasGrid
-    onReclamo={() => openNuevoReclamo("visitas")}
-    onInsumos={() => openNuevoReclamo("insumos")}
-    onSugerencia={() => {
-      setNuevoTab("sugerencia");
-      setOpenNuevo(true);
-    }}
-    onCalificarProfesional={() => {
-      setRate((s) => ({ ...s, target: "profesional" }));
-      setOpenCalif(true);
-    }}
-    onCalificarEmpresa={() => {
-      setRate((s) => ({ ...s, target: "empresa" }));
-      setOpenCalif(true);
-    }}
-    onMisReclamos={() => {
-      const el = document.getElementById("mis-reclamos");
-      el?.scrollIntoView({ behavior: "smooth" });
-    }}
-  />
-</section>
+            {/* ACCIONES RÁPIDAS PNG */}
+            <section>
+              <h2 className="text-2xl md:text-xl font-black px-1 mb-3" style={{ color: "#0f1b1b" }}>
+                Acciones rápidas
+              </h2>
 
+              <AccionesRapidasPng
+                items={[
+                  {
+                    title: "Necesito ayuda",
+                    img: "/img/actions/ayuda.png",
+                    onPress: () => openNuevoAyuda("visitas"),
+                  },
+                  {
+                    title: "Insumos",
+                    img: "/img/actions/insumos.png",
+                    onPress: () => openNuevoAyuda("insumos"),
+                  },
+                  {
+                    title: "Sugerencia",
+                    img: "/img/actions/sugerencia.png",
+                    onPress: () => {
+                      setNuevoTab("sugerencia");
+                      setOpenNuevo(true);
+                    },
+                  },
+                  {
+                    title: "Seguimiento",
+                    img: "/img/actions/mis-solicitudes.png", // (si no lo tenés, cambiá por otro)
+                    onPress: () => setOpenCheckin(true),
+                  },
+                ]}
+              />
 
-            {/* Mis reclamos */}
-            <section id="mis-reclamos">
+              <div className="text-sm mt-3 px-1" style={{ color: brand.steel, lineHeight: 1.35 }}>
+                Si algo no salió bien o necesitás asistencia, escribinos acá. Estamos para ayudarte 💚
+              </div>
+            </section>
+
+            {/* MIS SOLICITUDES */}
+            <section id="mis-solicitudes">
               <div className="flex items-end justify-between px-1 mb-3">
-                <h2 className="text-xl font-black" style={{ color: "#0f1b1b" }}>
-                  Mis reclamos
+                <h2 className="text-2xl md:text-xl font-black" style={{ color: "#0f1b1b" }}>
+                  Mis solicitudes
                 </h2>
 
                 <Badge content={tickets.length} color="primary">
-                  <Chip variant="flat">Casos</Chip>
+                  <Chip variant="flat">Mensajes</Chip>
                 </Badge>
               </div>
 
@@ -297,32 +386,38 @@ export default function AfiliadoHome() {
                 <CardBody className="p-0">
                   {tickets.map((t, idx) => (
                     <div key={t.id}>
-                      <div className="p-4 flex items-start justify-between gap-4">
-                        <div>
+                      <div className="p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div className="min-w-0">
                           <div className="text-xs font-bold" style={{ color: brand.steel }}>
                             {t.id} • {catLabel(t.categoria)} • {t.fecha}
                           </div>
-                          <div className="font-black" style={{ color: "#0f1b1b" }}>
+
+                          <div className="text-lg md:text-base font-black" style={{ color: "#0f1b1b" }}>
                             {t.titulo}
                           </div>
-                          <div className="text-sm mt-1" style={{ color: "#223535" }}>
+
+                          <div className="text-base md:text-sm mt-1" style={{ color: "#223535", lineHeight: 1.4 }}>
                             {t.detalle}
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-row md:flex-col items-start md:items-end gap-2">
                           <Chip color={statusColor(t.estado)} variant="flat" className="font-bold">
                             {t.estado}
                           </Chip>
-                          <Chip variant="flat">Prioridad: {t.prioridad}</Chip>
+
+                          <Chip variant="flat">
+                            Importancia:{" "}
+                            {PRIORIDADES.find((p) => p.key === t.prioridad)?.label ?? t.prioridad}
+                          </Chip>
 
                           <Button
-                            size="sm"
+                            size="lg"
                             variant="flat"
                             style={{ background: `${brand.teal}14`, color: brand.teal }}
-                            onPress={() => alert("Mock: ver detalle / timeline")}
+                            onPress={() => showToast("Seguimiento (demo) — próximamente 💚")}
                           >
-                            Ver detalle →
+                            Ver seguimiento →
                           </Button>
                         </div>
                       </div>
@@ -335,10 +430,10 @@ export default function AfiliadoHome() {
             </section>
           </div>
 
-          {/* Columna derecha (1/3): próximas visitas + tips */}
+          {/* DERECHA */}
           <div className="space-y-6">
             <section>
-              <h2 className="text-xl font-black px-1" style={{ color: "#0f1b1b" }}>
+              <h2 className="text-2xl md:text-xl font-black px-1" style={{ color: "#0f1b1b" }}>
                 Próximas visitas
               </h2>
 
@@ -348,12 +443,17 @@ export default function AfiliadoHome() {
                   time="14:30"
                   name="Lic. María Rodríguez"
                   role="Enfermería"
-                  onConfirm={() => alert("Mock: confirmar visita")}
+                  onConfirm={() => showToast("Confirmación (demo) ✅")}
                 />
                 <VisitCard when="MAÑANA" time="10:00" name="Dr. Carlos Gómez" role="Médico" />
                 <VisitCard when="12 Oct" time="16:00" name="Lic. Facundo Ríos" role="Kinesiología" />
 
-                <Button variant="flat" className="w-full" onPress={() => alert("Mock: historial")}>
+                <Button
+                  variant="flat"
+                  size="lg"
+                  className="w-full"
+                  onPress={() => showToast("Historial (demo) — próximamente 💚")}
+                >
                   Ver historial de visitas
                 </Button>
               </div>
@@ -361,15 +461,16 @@ export default function AfiliadoHome() {
 
             <Card className="border-none shadow-md">
               <CardBody className="space-y-2">
-                <div className="font-black" style={{ color: "#0f1b1b" }}>
-                  Atención espectacular = transparencia
+                <div className="font-black text-lg" style={{ color: "#0f1b1b" }}>
+                  Estamos para ayudarte 💚
                 </div>
-                <div className="text-sm" style={{ color: "#223535" }}>
-                  Reclamos con estado visible, seguimiento y posibilidad de calificar para mejorar la calidad.
+                <div className="text-base md:text-sm" style={{ color: "#223535", lineHeight: 1.4 }}>
+                  Podés avisarnos si algo no salió como esperabas o si necesitás asistencia.
+                  Vamos a acompañarte.
                 </div>
                 <Divider />
                 <div className="text-xs" style={{ color: brand.steel }}>
-                  SLA demo: primera respuesta &lt; 24hs • Escalamiento cuando es urgente
+                  Respuesta demo: dentro de las próximas 24 hs • Si es importante, lo priorizamos.
                 </div>
               </CardBody>
             </Card>
@@ -377,27 +478,34 @@ export default function AfiliadoHome() {
         </div>
       </main>
 
-      {/* MODAL: Nuevo caso / Sugerencia */}
+      {/* ✅ MODAL: NUEVA SOLICITUD / SUGERENCIA */}
       <Modal isOpen={openNuevo} onOpenChange={setOpenNuevo} placement="center" size="lg">
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                Crear solicitud
-                <span className="text-xs opacity-70">Reclamo • Consulta • Sugerencia</span>
+                Contanos qué necesitás
+                <span className="text-xs opacity-70">
+                  Podés pedir ayuda, hacer una consulta o dejar una sugerencia 💚
+                </span>
               </ModalHeader>
 
               <ModalBody className="space-y-4">
-                <Tabs selectedKey={nuevoTab} onSelectionChange={(k) => setNuevoTab(k)} variant="solid" radius="lg">
-                  <Tab key="reclamo" title="Reclamo / Consulta" />
+                <Tabs
+                  selectedKey={nuevoTab}
+                  onSelectionChange={(k) => setNuevoTab(k)}
+                  variant="solid"
+                  radius="lg"
+                >
+                  <Tab key="ayuda" title="Necesito ayuda" />
                   <Tab key="sugerencia" title="Sugerencia" />
                 </Tabs>
 
-                {nuevoTab === "reclamo" && (
+                {nuevoTab === "ayuda" && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Select
-                        label="Categoría"
+                        label="¿Sobre qué tema es?"
                         selectedKeys={[nuevo.categoria]}
                         onSelectionChange={(keys) => {
                           const v = Array.from(keys)[0];
@@ -410,7 +518,7 @@ export default function AfiliadoHome() {
                       </Select>
 
                       <Select
-                        label="Prioridad"
+                        label="¿Qué tan importante es?"
                         selectedKeys={[nuevo.prioridad]}
                         onSelectionChange={(keys) => {
                           const v = Array.from(keys)[0];
@@ -424,24 +532,24 @@ export default function AfiliadoHome() {
                     </div>
 
                     <Input
-                      label="Título"
-                      placeholder="Ej: Insumo defectuoso / No vino la enfermera"
+                      label="¿Qué pasó? (breve)"
+                      placeholder="Ej: No vino la enfermera / Un insumo vino mal"
                       value={nuevo.titulo}
                       onValueChange={(v) => setNuevo((s) => ({ ...s, titulo: v }))}
                       isRequired
                     />
 
                     <Textarea
-                      label="Detalle"
-                      placeholder="Contanos qué pasó (fecha/hora, qué insumo, quién debía ir, etc.)."
+                      label="Contanos un poco más"
+                      placeholder="Si podés, agregá fecha/hora y lo que necesitás."
                       value={nuevo.detalle}
                       onValueChange={(v) => setNuevo((s) => ({ ...s, detalle: v }))}
-                      minRows={5}
+                      minRows={6}
                       isRequired
                     />
 
                     <Input
-                      label="Fecha del incidente (opcional)"
+                      label="¿Cuándo pasó? (opcional)"
                       type="date"
                       value={nuevo.fechaIncidente}
                       onValueChange={(v) => setNuevo((s) => ({ ...s, fechaIncidente: v }))}
@@ -449,18 +557,19 @@ export default function AfiliadoHome() {
 
                     <div className="rounded-2xl p-4" style={{ background: "rgba(0,0,0,0.06)" }}>
                       <div className="text-xs font-bold" style={{ color: brand.steel }}>
-                        Adjuntos (mock)
+                        Si querés, podés adjuntar una foto (opcional)
                       </div>
-                      <div className="text-sm mt-1" style={{ color: "#223535" }}>
-                        Podés adjuntar foto del insumo, remito o captura de chat.
+                      <div className="text-base md:text-sm mt-1" style={{ color: "#223535" }}>
+                        Por ejemplo: foto del insumo, remito o etiqueta.
                       </div>
                       <Button
-                        className="mt-3 font-bold"
+                        size="lg"
+                        className="mt-3 font-bold w-full md:w-auto"
                         variant="flat"
                         style={{ background: `${brand.teal}14`, color: brand.teal }}
-                        onPress={() => alert("Mock: adjuntar archivo")}
+                        onPress={() => showToast("Adjuntar (demo) — próximamente 💚")}
                       >
-                        Adjuntar archivo
+                        Adjuntar foto
                       </Button>
                     </div>
                   </>
@@ -476,11 +585,11 @@ export default function AfiliadoHome() {
                       isRequired
                     />
                     <Textarea
-                      label="Detalle"
-                      placeholder="Contanos tu idea o sugerencia."
+                      label="Contanos tu sugerencia"
+                      placeholder="Tu idea nos ayuda a mejorar."
                       value={nuevo.detalle}
                       onValueChange={(v) => setNuevo((s) => ({ ...s, detalle: v }))}
-                      minRows={6}
+                      minRows={7}
                       isRequired
                     />
                   </>
@@ -488,16 +597,23 @@ export default function AfiliadoHome() {
               </ModalBody>
 
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>
-                  Cancelar
+                <Button variant="light" size="lg" onPress={onClose}>
+                  Volver
                 </Button>
+
                 <Button
+                  size="lg"
                   style={{ backgroundColor: brand.teal, color: "white" }}
                   onPress={() => {
                     if (nuevoTab === "sugerencia") {
-                      if (!nuevo.titulo || !nuevo.detalle) return;
-                      alert("Mock: sugerencia enviada ✅");
+                      const tituloOk = (nuevo.titulo || "").trim().length >= 3;
+                      const detalleOk = (nuevo.detalle || "").trim().length >= 8;
+                      if (!tituloOk || !detalleOk) {
+                        showToast("Completá el título y el detalle 💚", "warn");
+                        return;
+                      }
                       setNuevo((s) => ({ ...s, titulo: "", detalle: "" }));
+                      showToast("¡Gracias! Recibimos tu sugerencia 💚", "success");
                       onClose();
                       return;
                     }
@@ -512,19 +628,199 @@ export default function AfiliadoHome() {
         </ModalContent>
       </Modal>
 
-      {/* MODAL: Calificar */}
+      {/* ✅ MODAL: SEGUIMIENTO QUINCENAL (UNA SOLA VEZ, BIEN UBICADO) */}
+      <Modal isOpen={openCheckin} onOpenChange={setOpenCheckin} placement="center" size="lg">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/img/osdepymlogo.jpg"
+                    alt="OSDEPYM"
+                    className="h-7 opacity-80"
+                    style={{ borderRadius: 10 }}
+                  />
+                  <div className="leading-tight">
+                    <div className="font-black">Seguimiento de bienestar 💚</div>
+                    <div className="text-xs opacity-70">
+                      Demo: se muestra cada 15 días para acompañarte mejor.
+                    </div>
+                  </div>
+                </div>
+              </ModalHeader>
+
+              <ModalBody className="space-y-4">
+                {checkinOk && (
+                  <div
+                    className="rounded-2xl p-4 border flex items-center gap-3"
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      background: "rgba(169, 198, 198, 0.35)",
+                      borderColor: "rgba(169, 198, 198, 0.75)",
+                    }}
+                  >
+                    <div
+                      className="h-10 w-10 rounded-full grid place-items-center"
+                      style={{
+                        background: "rgba(18, 91, 88, 0.14)",
+                        border: "1px solid rgba(18, 91, 88, 0.22)",
+                        color: "#125b58",
+                        fontWeight: 900,
+                        fontSize: 18,
+                      }}
+                    >
+                      ✓
+                    </div>
+                    <div>
+                      <div className="text-sm font-extrabold" style={{ color: "#0f1b1b" }}>
+                        Gracias 💚
+                      </div>
+                      <div className="text-sm" style={{ color: "#223535" }}>
+                        Recibimos tu mensaje. Estamos para ayudarte.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  className="rounded-2xl p-4 text-sm"
+                  style={{
+                    background: "rgba(18,91,88,0.08)",
+                    color: "#223535",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Queremos escucharte. Tus respuestas nos ayudan a mejorar tu atención y hacer todo más simple.
+                </div>
+
+                <Select
+                  label="¿Cómo te sentiste con las visitas en tu domicilio?"
+                  selectedKeys={[checkin.visitas]}
+                  onSelectionChange={(keys) => {
+                    const v = Array.from(keys)[0];
+                    setCheckin((s) => ({ ...s, visitas: v }));
+                  }}
+                >
+                  <SelectItem key="muy_bien">Muy bien</SelectItem>
+                  <SelectItem key="bien">Bien</SelectItem>
+                  <SelectItem key="regular">Regular</SelectItem>
+                  <SelectItem key="mal">No fue como esperaba</SelectItem>
+                </Select>
+
+                <Select
+                  label="¿Te resultó fácil coordinar horarios y turnos?"
+                  selectedKeys={[checkin.coordinacion]}
+                  onSelectionChange={(keys) => {
+                    const v = Array.from(keys)[0];
+                    setCheckin((s) => ({ ...s, coordinacion: v }));
+                  }}
+                >
+                  <SelectItem key="si">Sí, fue fácil</SelectItem>
+                  <SelectItem key="mas_o_menos">Más o menos</SelectItem>
+                  <SelectItem key="no">No, necesito ayuda</SelectItem>
+                </Select>
+
+                <Select
+                  label="¿Hubo algo que te resultó difícil o confuso?"
+                  selectedKeys={[checkin.claridad]}
+                  onSelectionChange={(keys) => {
+                    const v = Array.from(keys)[0];
+                    setCheckin((s) => ({ ...s, claridad: v }));
+                  }}
+                >
+                  <SelectItem key="no">No, todo fue claro</SelectItem>
+                  <SelectItem key="un_poco">Sí, un poco</SelectItem>
+                  <SelectItem key="si">Sí, me cuesta bastante</SelectItem>
+                </Select>
+
+                <Select
+                  label="¿Qué te gustaría que sea más simple o más rápido?"
+                  selectedKeys={[checkin.simple]}
+                  onSelectionChange={(keys) => {
+                    const v = Array.from(keys)[0];
+                    setCheckin((s) => ({ ...s, simple: v }));
+                  }}
+                >
+                  <SelectItem key="nada">Está bien así</SelectItem>
+                  <SelectItem key="botones">Botones más grandes</SelectItem>
+                  <SelectItem key="avisos">Avisos por WhatsApp</SelectItem>
+                  <SelectItem key="coord">Mejor coordinación</SelectItem>
+                </Select>
+
+                <Select
+                  label="¿Necesitás alguna adaptación especial?"
+                  selectedKeys={[checkin.adaptacion]}
+                  onSelectionChange={(keys) => {
+                    const v = Array.from(keys)[0];
+                    setCheckin((s) => ({ ...s, adaptacion: v }));
+                  }}
+                >
+                  <SelectItem key="no">No</SelectItem>
+                  <SelectItem key="letras">Letras más grandes</SelectItem>
+                  <SelectItem key="ayuda">Ayuda para usar la app</SelectItem>
+                  <SelectItem key="movilidad">Dificultad motora</SelectItem>
+                  <SelectItem key="vision">Dificultad visual</SelectItem>
+                </Select>
+
+                <Textarea
+                  label="¿Qué podríamos mejorar para cuidarte mejor?"
+                  placeholder="Podés contarnos con tranquilidad. Tu mensaje es importante 💚"
+                  value={checkin.sugerencia}
+                  onValueChange={(v) => setCheckin((s) => ({ ...s, sugerencia: v }))}
+                  minRows={5}
+                />
+              </ModalBody>
+
+              <ModalFooter className="flex gap-2">
+                <Button
+                  variant="light"
+                  size="lg"
+                  className="flex-1"
+                  onPress={() => {
+                    setCheckinOk(false);
+                    onClose();
+                  }}
+                >
+                  Ahora no
+                </Button>
+
+                <Button
+                  size="lg"
+                  className="flex-1"
+                  style={{ backgroundColor: brand.teal, color: "white" }}
+                  onPress={() => {
+                    setCheckinOk(true);
+                    showToast("Gracias por contarnos. Vamos a seguir cuidándote 💚", "success");
+
+                    setTimeout(() => {
+                      setCheckinOk(false);
+                      onClose();
+                    }, 1200);
+                  }}
+                >
+                  Enviar 💚
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* ✅ MODAL: DEJAR COMENTARIO */}
       <Modal isOpen={openCalif} onOpenChange={setOpenCalif} placement="center" size="lg">
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                Calificar atención
-                <span className="text-xs opacity-70">Profesional o Empresa ID</span>
+                Dejar un comentario
+                <span className="text-xs opacity-70">Tu opinión nos ayuda a mejorar 💚</span>
               </ModalHeader>
 
               <ModalBody className="space-y-4">
                 <Select
-                  label="¿A quién querés calificar?"
+                  label="¿A quién querés dejarle un comentario?"
                   selectedKeys={[rate.target]}
                   onSelectionChange={(keys) => {
                     const v = Array.from(keys)[0];
@@ -532,11 +828,11 @@ export default function AfiliadoHome() {
                   }}
                 >
                   <SelectItem key="profesional">Profesional</SelectItem>
-                  <SelectItem key="empresa">Empresa ID</SelectItem>
+                  <SelectItem key="empresa">Empresa</SelectItem>
                 </Select>
 
                 <Input
-                  label={rate.target === "profesional" ? "Nombre del profesional" : "Nombre de la empresa"}
+                  label={rate.target === "profesional" ? "¿Quién te atendió?" : "¿Qué empresa te atendió?"}
                   placeholder={rate.target === "profesional" ? "Ej: Lic. Rodríguez" : "Ej: Best Care"}
                   value={rate.nombre}
                   onValueChange={(v) => setRate((s) => ({ ...s, nombre: v }))}
@@ -547,52 +843,56 @@ export default function AfiliadoHome() {
 
                 <Textarea
                   label="Comentario (opcional)"
-                  placeholder="¿Qué estuvo bien? ¿Qué mejorarías?"
+                  placeholder="¿Qué estuvo bien? ¿Qué se puede mejorar?"
                   value={rate.comentario}
                   onValueChange={(v) => setRate((s) => ({ ...s, comentario: v }))}
-                  minRows={4}
+                  minRows={5}
                 />
               </ModalBody>
 
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>
-                  Cancelar
+                <Button variant="light" size="lg" onPress={onClose}>
+                  Volver
                 </Button>
-                <Button style={{ backgroundColor: brand.teal, color: "white" }} onPress={submitCalif}>
-                  Enviar calificación
+                <Button size="lg" style={{ backgroundColor: brand.teal, color: "white" }} onPress={submitCalif}>
+                  Enviar
                 </Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
+
+      {/* ✅ Toast siempre al final */}
+      <Toast toast={toast} />
     </div>
   );
 }
 
-function QuickCard({ title, subtitle, icon, onPress }) {
+/** ======================= ACCIONES RÁPIDAS PNG ======================= */
+function AccionesRapidasPng({ items = [] }) {
   return (
-    <button onClick={onPress} className="w-full text-left">
-      <Card className="border-none shadow-md hover:shadow-lg transition">
-        <CardBody className="p-5 space-y-2">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="font-black" style={{ color: "#0f1b1b" }}>
-                {title}
-              </div>
-              <div className="text-sm" style={{ color: "#223535" }}>
-                {subtitle}
-              </div>
-            </div>
-            <Icon>{icon}</Icon>
-          </div>
-
-          <div className="text-xs font-bold" style={{ color: "#125b58" }}>
-            Abrir →
-          </div>
-        </CardBody>
-      </Card>
-    </button>
+    <div className="grid grid-cols-2 gap-4">
+      {items.map((it) => (
+        <button
+          key={it.title}
+          onClick={it.onPress}
+          className="w-full text-left active:scale-[0.99] transition"
+          style={{ borderRadius: 28 }}
+        >
+          <img
+            src={it.img}
+            alt={it.title}
+            className="w-full h-auto"
+            style={{
+              borderRadius: 28,
+              display: "block",
+              boxShadow: "0 10px 24px rgba(15, 27, 27, 0.10)",
+            }}
+          />
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -601,11 +901,11 @@ function VisitCard({ when, time, name, role, onConfirm }) {
     <Card className="border-none shadow-md">
       <CardBody className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="font-black" style={{ color: "#0f1b1b" }}>
+          <div className="min-w-0">
+            <div className="font-black text-lg" style={{ color: "#0f1b1b" }}>
               {name}
             </div>
-            <div className="text-xs" style={{ color: "#223535" }}>
+            <div className="text-sm" style={{ color: "#223535" }}>
               {role}
             </div>
           </div>
@@ -617,11 +917,16 @@ function VisitCard({ when, time, name, role, onConfirm }) {
         <Divider />
 
         <div className="flex items-center justify-between">
-          <div className="text-sm" style={{ color: "#223535" }}>
+          <div className="text-base" style={{ color: "#223535" }}>
             ⏰ {time} hs
           </div>
           {onConfirm ? (
-            <Button size="sm" variant="flat" onPress={onConfirm} style={{ background: "rgba(18,91,88,0.12)", color: "#125b58" }}>
+            <Button
+              size="lg"
+              variant="flat"
+              onPress={onConfirm}
+              style={{ background: "rgba(18,91,88,0.12)", color: "#125b58" }}
+            >
               Confirmar
             </Button>
           ) : (
@@ -638,20 +943,20 @@ function VisitCard({ when, time, name, role, onConfirm }) {
 function Stars({ value, onChange }) {
   return (
     <div className="space-y-2">
-      <div className="text-sm font-black">Puntuación</div>
+      <div className="text-base font-black">Puntuación</div>
       <div className="flex items-center gap-2">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             onClick={() => onChange(n)}
-            className="text-2xl"
+            className="text-3xl"
             style={{ opacity: n <= value ? 1 : 0.35 }}
             aria-label={`${n} estrellas`}
           >
             ⭐
           </button>
         ))}
-        <span className="text-sm opacity-70">{value}/5</span>
+        <span className="text-base opacity-70">{value}/5</span>
       </div>
     </div>
   );

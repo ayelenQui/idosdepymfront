@@ -157,13 +157,13 @@ export default function AfiliadoLayout() {
 
           <NavbarItem>
             <Link color="foreground" className="font-bold" href="/afiliado/plan">
-              Mi Plan
+              
             </Link>
           </NavbarItem>
 
           <NavbarItem>
             <Link color="foreground" className="font-bold" href="/afiliado/visitas">
-              Mis Visitas
+              
             </Link>
           </NavbarItem>
         </NavbarContent>
@@ -172,7 +172,7 @@ export default function AfiliadoLayout() {
         <NavbarContent justify="end">
           <NavbarItem className="hidden lg:flex">
             <Chip variant="flat" style={{ background: `${brand.teal}14`, color: brand.teal }}>
-              Atención 24hs
+             Te estamos cuidando
             </Chip>
           </NavbarItem>
 

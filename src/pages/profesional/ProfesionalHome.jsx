@@ -2,6 +2,7 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
+
 import {
   Button,
   Chip,
@@ -588,6 +589,22 @@ export default function ProfesionalHome() {
           )}
         </ModalContent>
       </Modal>
+<Button
+  className="w-full mt-2 py-6 tap"
+  style={{
+    background: "rgba(239,68,68,0.14)",
+    border: "1px solid rgba(239,68,68,0.30)",
+    color: "#7f1d1d",
+    fontWeight: 900,
+    borderRadius: 20,
+  }}
+  onPress={() => {
+    setOpenNoVisita(true);
+    startGeoWatchNoVisita(); // si querés ubicación también
+  }}
+>
+  ❌ VISITA DENEGADA / NO ME PERMITEN INGRESAR
+</Button>
 
       {/* MODAL: Registrar visita */}
       <Modal
@@ -1037,6 +1054,7 @@ export default function ProfesionalHome() {
           }}
         </ModalContent>
       </Modal>
+      
     </div>
   );
 }
